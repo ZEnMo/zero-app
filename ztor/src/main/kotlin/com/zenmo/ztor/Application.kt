@@ -6,7 +6,6 @@ import com.zenmo.orm.connectToPostgres
 import com.zenmo.orm.createSchema
 import com.zenmo.orm.echoSchemaSql
 import com.zenmo.ztor.plugins.*
-import com.zenmo.zummon.companysurvey.TimeSeries
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*

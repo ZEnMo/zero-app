@@ -110,10 +110,47 @@ Gets metering data from Fudura.
 Running locally
 ---
 
-Run the web application locally using Docker Compose:
+Local environment can be set up and run using Docker Compose
+
+1\. Copy *.example.env files in [./docker](./docker) and fill in the variables.
+
+2\. Install dependencies
 
 ```bash
-docker compose up ztor-run frontend
+docker compose run --rm gradle-base zummon:jsBrowserProductionLibraryDistribution
+docker compose run --rm npm install --include dev
 ```
 
-Then navigate to [http://localhost:1234](http://localhost:1234).
+3\. Start frontend
+
+```bash
+docker compose up -d frontend
+```
+
+The frontend should now be working. Validate this at 
+[http://localhost:1234](http://localhost:1234).
+
+4\. Start database
+
+```bash
+docker compose up postgres
+```
+
+4\. Initialize database schema
+
+```bash
+docker compose run --rm ztor-gradle-with-db ztor:run --args=create-schema
+```
+
+5\. Start backend
+
+```bash
+docker compose up -d ztor-run
+```
+
+It should be working. Validate this at 
+[http://localhost:8082](http://localhost:8082). 
+It should say "Ztor application".
+
+6\. To fully use the application you need to add your Keycloak user to the 
+table `user`, and add entries to the table `project` and`user_project`.

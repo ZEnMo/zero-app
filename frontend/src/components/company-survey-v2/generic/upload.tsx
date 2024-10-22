@@ -47,7 +47,7 @@ export const Upload: FunctionComponent<{
             company: company,
             purpose: purpose,
         })
-        const response = await fetch(process.env.ZTOR_URL + '/upload-url?' + queryParams.toString())
+        const response = await fetch(import.meta.env.VITE_ZTOR_URL + '/upload-url?' + queryParams.toString())
         const uploadAuthorization: UploadAuthorization = await response.json()
 
         // @ts-ignore

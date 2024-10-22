@@ -34,7 +34,7 @@ const useSurvey = (routeData: SurveyByIdRouteData): { loading: boolean, survey: 
 
     useOnce(async () => {
         try {
-            const url = new URL(process.env.ZTOR_URL + '/company-surveys/' + routeData.surveyId)
+            const url = new URL(import.meta.env.VITE_ZTOR_URL + '/company-surveys/' + routeData.surveyId)
             if (routeData.deeplink && routeData.secret) {
                 url.searchParams.append('deeplink', routeData.deeplink)
                 url.searchParams.append('secret', routeData.secret)
@@ -44,7 +44,7 @@ const useSurvey = (routeData: SurveyByIdRouteData): { loading: boolean, survey: 
                 credentials: 'include',
             })
             if (response.status === 401) {
-                window.location.href = process.env.ZTOR_URL + '/login?redirectUrl=' + encodeURIComponent(window.location.href)
+                window.location.href = import.meta.env.VITE_ZTOR_URL + '/login?redirectUrl=' + encodeURIComponent(window.location.href)
                 return
             }
 

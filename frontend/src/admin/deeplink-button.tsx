@@ -14,7 +14,7 @@ export const DeeplinkButton: FunctionComponent<{surveyId: any, onDelete?: (surve
 
     const generateDeeplink = async (event: any) => {
         try {
-            const response = await fetch(`${process.env.ZTOR_URL}/company-surveys/${surveyId}/deeplink`, {
+            const response = await fetch(`${import.meta.env.VITE_ZTOR_URL}/company-surveys/${surveyId}/deeplink`, {
                 method: 'POST',
                 credentials: 'include',
             })

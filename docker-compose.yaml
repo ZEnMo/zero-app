@@ -126,7 +126,7 @@ services:
             - 127.0.0.1:8082:8082
         environment:
             BASE_URL: http://localhost:8082
-            CORS_ALLOW_ORIGIN_PATTERN: 'http://localhost:1234'
+            CORS_ALLOW_ORIGIN_PATTERN: 'http://localhost:\d{2,5}'
             # Keycloak test realm JWK
             ACCESS_TOKEN_JWK: |
                 {
@@ -171,7 +171,7 @@ services:
             POSTGRES_URL: jdbc:postgresql://postgres:5432/postgres
             POSTGRES_USER: postgres
             BASE_URL: http://localhost:8082
-            CORS_ALLOW_ORIGIN_PATTERN: 'http://localhost:1234'
+            CORS_ALLOW_ORIGIN_PATTERN: 'http://localhost:\d{2,5}'
             # Keycloak test realm JWK
             ACCESS_TOKEN_JWK: |
                 {
@@ -189,16 +189,24 @@ services:
         volumes:
             - .:/app
         entrypoint: npm
+        environment:
+            VITE_ZTOR_URL: http://localhost:8082
 
     frontend:
         extends:
             service: npm
         command: run start
-        environment:
-            KLEINVERBRUIK_URL: http://127.0.0.1:80
-            ZTOR_URL: http://localhost:8082
         ports:
-            - 127.0.0.1:1234:1234
+            - 127.0.0.1:3000:3000
+
+    ## first run `docker-compose run --rm npm run build`
+    frontend-static:
+        build:
+            context: ./docker/caddy
+        volumes:
+            - ./frontend/dist:/srv
+        ports:
+            - 127.0.0.1:2015:2015
 
     postgres:
         image: postgres:13.9 # same as on Azure

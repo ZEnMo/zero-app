@@ -267,6 +267,7 @@ class SurveyRepository(
             expansionPlans = row[GridConnectionTable.expansionPlans],
             electrificationPlans = row[GridConnectionTable.electrificationPlans],
             surveyFeedback = row[GridConnectionTable.surveyFeedback],
+            pandIds = row[GridConnectionTable.pandIds].map { PandID(it) }.toSet(),
             electricity = Electricity(
                 hasConnection = row[GridConnectionTable.hasElectricityConnection],
                 ean = row[GridConnectionTable.electricityEan],
@@ -416,6 +417,7 @@ class SurveyRepository(
 
                 this[GridConnectionTable.id] = gridConnection.id
                 this[GridConnectionTable.addressId] = addressId
+                this[GridConnectionTable.pandIds] = gridConnection.pandIds.toList().map { it.value }
 
                 // open questions
                 this[GridConnectionTable.energyOrBuildingManagementSystemSupplier] = gridConnection.energyOrBuildingManagementSystemSupplier

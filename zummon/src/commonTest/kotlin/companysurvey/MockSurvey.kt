@@ -1,7 +1,8 @@
-package com.zenmo.orm.companysurvey
+package companysurvey
 
+import com.benasher44.uuid.uuid4
 import com.zenmo.zummon.companysurvey.*
-import java.util.*
+import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.hours
 
 val mockSurvey = createMockSurvey()
@@ -14,7 +15,7 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
     dataSharingAgreed = true,
     addresses = listOf(
         Address(
-            id = UUID.randomUUID(),
+            id = uuid4(),
             street = "Kerkstraat",
             houseNumber = 35,
             houseLetter = "A",
@@ -65,17 +66,17 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                         ),
                         quarterHourlyDelivery_kWh = TimeSeries(
                             type = TimeSeriesType.ELECTRICITY_DELIVERY,
-                            start = kotlinx.datetime.Instant.parse("2022-01-01T00:00:00+01"),
+                            start = Instant.parse("2022-01-01T00:00:00+01"),
                             values = floatArrayOf(1.2f, 2.2f, 3.2f, 4.2f),
                         ),
                         quarterHourlyFeedIn_kWh = TimeSeries(
                             type = TimeSeriesType.ELECTRICITY_FEED_IN,
-                            start = kotlinx.datetime.Instant.parse("2022-01-01T00:00:00+01"),
+                            start = Instant.parse("2022-01-01T00:00:00+01"),
                             values = floatArrayOf(1.2f, 2.2f, 3.2f, 4.2f),
                         ),
                         quarterHourlyProduction_kWh = TimeSeries(
                             type = TimeSeriesType.ELECTRICITY_PRODUCTION,
-                            start = kotlinx.datetime.Instant.parse("2022-01-01T00:00:00+01"),
+                            start = Instant.parse("2022-01-01T00:00:00+01"),
                             values = floatArrayOf(1.2f, 2.2f, 3.2f, 4.2f),
                         ),
                         annualElectricityProduction_kWh = 3000,
@@ -108,7 +109,7 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                         percentageUsedForHeating = 50,
                         hourlyDelivery_m3 = TimeSeries(
                             type = TimeSeriesType.GAS_DELIVERY,
-                            start = kotlinx.datetime.Instant.parse("2022-01-01T00:00:00+01"),
+                            start = Instant.parse("2022-01-01T00:00:00+01"),
                             timeStep = 2.hours,
                             values = floatArrayOf(1.2f, 2.2f, 3.2f, 4.2f),
                         )
@@ -175,12 +176,24 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                             description = "Other vehicles description",
                         )
                     ),
-                    pandIds = setOf(
-                        PandID("1234567890123456"),
-                        PandID("6543210987654321"),
-                    )
                 )
             ),
         )
     )
+)
+
+fun wipeCapacity() = mockSurvey.copy(
+    addresses = mockSurvey.addresses.map {
+        it.copy(
+            gridConnections = it.gridConnections.map { gridConnection ->
+                gridConnection.copy(
+                    electricity = gridConnection.electricity.copy(
+                        grootverbruik = gridConnection.electricity.grootverbruik?.copy(
+                            physicalCapacityKw = null
+                        )
+                    )
+                )
+            }
+        )
+    },
 )

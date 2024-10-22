@@ -1,6 +1,6 @@
 import {PostcodeKleinverbruik} from './types'
 
-const kleinverbruikUrl = process.env.KLEINVERBRUIK_URL || 'https://kleinverbruik.thankfulbay-feb62349.westeurope.azurecontainerapps.io'
+const kleinverbruikUrl = import.meta.env.VITE_KLEINVERBRUIK_URL || 'https://kleinverbruik.thankfulbay-feb62349.westeurope.azurecontainerapps.io'
 
 export const fetchLianderAndStedinKleinverbruik = async (postalCodes: string[]): Promise<PostcodeKleinverbruik[]> => {
     if (postalCodes.length === 0) {

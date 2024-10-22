@@ -14,7 +14,7 @@ export const LoginWidget: FunctionComponent = () => {
 
     if (!isLoggedIn) {
         return (
-            <a href={process.env.ZTOR_URL + "/login?redirectUrl=" + encodeURIComponent(location.href)}>Login</a>
+            <a href={import.meta.env.VITE_ZTOR_URL + "/login?redirectUrl=" + encodeURIComponent(location.href)}>Login</a>
         )
     }
 

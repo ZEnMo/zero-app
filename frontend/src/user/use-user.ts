@@ -16,7 +16,7 @@ export const useUser = (): UseUserReturn => {
 
     useOnce(async () => {
         try {
-            const response = await fetch(process.env.ZTOR_URL + "/user-info", {
+            const response = await fetch(import.meta.env.VITE_ZTOR_URL + "/user-info", {
                 credentials: "include",
             })
             if (response.status == 401) {

@@ -72,7 +72,7 @@ export const Admin: FunctionComponent = () => {
 }
 
 const downloadUrl = (blobName: string) =>
-    process.env.ZTOR_URL + "/download?blobName=" + encodeURIComponent(blobName)
+    import.meta.env.VITE_ZTOR_URL + "/download?blobName=" + encodeURIComponent(blobName)
 
 // Doing it in JavaScript because no timezone available in Kotlin.
 const formatDatetime = (date: string) => {

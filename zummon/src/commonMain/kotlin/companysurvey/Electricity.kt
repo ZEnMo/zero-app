@@ -40,6 +40,10 @@ data class Electricity (
     fun getContractedConnectionCapacityKw(): Int? {
         return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.contractedConnectionDeliveryCapacity_kW
     }
+
+    fun getPhysicalConnectionCapacityKw(): Int? {
+        return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.physicalCapacityKw
+    }
 }
 
 @Serializable

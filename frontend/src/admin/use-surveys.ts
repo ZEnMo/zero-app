@@ -14,7 +14,7 @@ export const useSurveys = (): UseSurveyReturn => {
 
     useOnce(async () => {
         try {
-            const response = await fetch(process.env.ZTOR_URL + '/company-surveys', {
+            const response = await fetch(import.meta.env.VITE_ZTOR_URL + '/company-surveys', {
                 credentials: 'include',
             })
             if (response.status === 401) {
@@ -42,5 +42,5 @@ export const useSurveys = (): UseSurveyReturn => {
 }
 
 export const redirectToLogin = () => {
-    window.location.href = process.env.ZTOR_URL + '/login?redirectUrl=' + encodeURIComponent(window.location.href)
+    window.location.href = import.meta.env.VITE_ZTOR_URL + '/login?redirectUrl=' + encodeURIComponent(window.location.href)
 }

@@ -10,7 +10,7 @@ export const DeleteButton: FunctionComponent<{surveyId: any, onDelete?: (surveyI
             if (!confirm('Uitvraag verwijderen?')) {
                 return
             }
-            await fetch(`${process.env.ZTOR_URL}/company-surveys/${surveyId}`, {
+            await fetch(`${import.meta.env.VITE_ZTOR_URL}/company-surveys/${surveyId}`, {
                 method: 'DELETE',
                 credentials: 'include',
             })

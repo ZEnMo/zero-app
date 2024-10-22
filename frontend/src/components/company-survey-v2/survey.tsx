@@ -116,7 +116,7 @@ const SurveyWithReset: FunctionComponent<{
 
         surveyData = prepareForSubmit(surveyData, project.name)
 
-        const url = process.env.ZTOR_URL + '/company-surveys'
+        const url = import.meta.env.VITE_ZTOR_URL + '/company-surveys'
         try {
             const response = await fetch(url, {
                 method: 'POST',

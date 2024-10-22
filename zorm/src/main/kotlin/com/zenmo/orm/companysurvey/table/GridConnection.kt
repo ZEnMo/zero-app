@@ -7,6 +7,7 @@ import com.zenmo.orm.dbutil.ZenmoUUIDTable
 import com.zenmo.orm.dbutil.enumArray
 import com.zenmo.zummon.companysurvey.*
 import org.jetbrains.exposed.sql.Sequence
+import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.nextIntVal
 
 /**
@@ -61,6 +62,7 @@ object GridConnectionTable: ZenmoUUIDTable("grid_connection") {
     val hasExpansionRequestAtGridOperator = bool("has_expansion_request_at_grid_operator").nullable()
     val expansionRequestKW = uinteger("expansion_request_kw").nullable()
     val expansionRequestReason = varchar("expansion_request_reason", 1000)
+    val pandIds = array<String>("pand_ids", VarCharColumnType(16)).default(emptyList())
 
     /**
      * [com.zenmo.zummon.companysurvey.Supply]
