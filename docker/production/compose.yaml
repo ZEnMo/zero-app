@@ -1,0 +1,53 @@
+version: "3.8"
+
+# Compose file for Docker Swarm
+services:
+    frontend:
+        image: ghcr.io/zenmo/zero-frontend:${TAG}
+        networks:
+            - caddy_default
+        labels:
+            caddy: ${FRONTEND_HOSTNAME}
+            caddy.reverse_proxy: "{{upstreams 2015}}"
+            # This certificate only works for the pullrequest domain.
+            # It should fall back to Let's Encrypt for the main domain.
+            # Except it doesn't.
+            #caddy.tls: /static_certs/wildcard.zero.zenmo.com/fullchain.pem /static_certs/wildcard.zero.zenmo.com/privkey.pem
+        deploy:
+            resources:
+                limits:
+                    cpus: "2"
+                    memory: 2G
+
+    ztor:
+        image: ghcr.io/zenmo/ztor:${TAG}
+        environment:
+            POSTGRES_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+#            POSTGRES_URL: jdbc:postgresql://postgres.zenmo.com:5432/${DB_NAME}
+            POSTGRES_USER: ${DB_NAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            AZURE_STORAGE_ACCOUNT_NAME: zerostore
+            AZURE_STORAGE_ACCOUNT_KEY: ${AZURE_STORAGE_ACCOUNT_KEY}
+            AZURE_STORAGE_CONTAINER: ${AZURE_STORAGE_CONTAINER}
+            CORS_ALLOW_ORIGIN_PATTERN: ${CORS_ALLOW_ORIGIN_PATTERN}
+            OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID}
+            OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET}
+            BASE_URL: https://${ZTOR_HOSTNAME}
+        networks:
+            - caddy_default
+            - postgres_default
+        labels:
+            caddy: ${ZTOR_HOSTNAME}
+            caddy.reverse_proxy: "{{upstreams 8082}}"
+            caddy.tls: /static_certs/wildcard.zero.zenmo.com/fullchain.pem /static_certs/wildcard.zero.zenmo.com/privkey.pem
+        deploy:
+            resources:
+                limits:
+                    cpus: "4"
+                    memory: 8G
+
+networks:
+    caddy_default:
+        external: true
+    postgres_default:
+        external: true

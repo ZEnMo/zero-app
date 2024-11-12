@@ -1,39 +1,47 @@
-import {FunctionComponent, useState} from "react"
-import {SurveyWithErrors} from "zero-zummon"
-import {Message} from "primereact/message"
+import {FunctionComponent} from "react"
+import {SurveyWithErrors, surveyValidator, ValidationResult, Status, KtList} from "zero-zummon"
 import {Button} from "primereact/button"
-import {mapOrElse} from "../services/util"
+import {MessageDisplay} from "./message-display"
+import { Panel } from 'primereact/panel';
+
+import {Card} from "primereact/card";
+import {Tooltip} from 'primereact/tooltip';
 
 import {useToggle} from "../hooks/use-toggle"
+import {Message} from "primereact/message";
 
 export const Feedback: FunctionComponent<{
     surveyWithErrors: SurveyWithErrors
     navigateNext: () => void
 }> = ({surveyWithErrors, navigateNext}) => {
-    const [dataVisible, toggleDataVisible] = useToggle()
+    const results = surveyValidator.get().validate(surveyWithErrors.survey)
 
     return (
         <>
+            <MessageDisplay validationResults={results}/>
+            <div style={{margin: "1rem"}}>
+                <Panel header="Data Verbergen" toggleable>
+                    <pre style={{
+                        backgroundColor: '#1e1e1e',
+                        color: '#dcdcdc',
+                        padding: '1rem',
+                        borderRadius: '5px',
+                        fontFamily: 'monospace',
+                        overflow: 'auto',
+                        maxHeight: '400px'
+                    }}>
+                        {surveyWithErrors?.survey.toPrettyJson()}
+                    </pre>
+                </Panel>
+            </div>
+
             <div style={{
                 display: "flex",
-                flexDirection: "column",
                 gap: "1rem",
-                paddingBottom: "1rem",
+                margin: "1rem"
             }}>
-                {mapOrElse(
-                    surveyWithErrors.errors.asJsReadonlyArrayView(),
-                    (error, i) => <Message severity="warn" text={error} key={i} />,
-                    () => <Message severity="info" text="Alle checks OK" key="ok" />,
-                )}
+                <Button label="Panden selecteren" icon="pi pi-arrow-right" onClick={navigateNext}/>
             </div>
-            <div style={{
-                display: "flex",
-                gap: "1rem",
-            }}>
-                <Button label={dataVisible ? "{} Data verbergen" : "{} Data bekijken"} onClick={toggleDataVisible}/>
-                <Button label="Panden selecteren" icon="pi pi-arrow-right" onClick={navigateNext} />
-            </div>
-            {dataVisible && <pre>{surveyWithErrors.survey.toPrettyJson()}</pre>}
         </>
     )
 }

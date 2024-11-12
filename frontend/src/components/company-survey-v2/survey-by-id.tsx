@@ -3,6 +3,7 @@ import {useState} from "react";
 import {useOnce} from "../../hooks/use-once";
 import {Survey as SurveyComponent} from "./survey";
 import {getProjectConfiguration} from "./project";
+import {redirectToLogin} from "../../admin/use-surveys"
 
 export type SurveyByIdRouteData = {
     surveyId: string,
@@ -44,7 +45,7 @@ const useSurvey = (routeData: SurveyByIdRouteData): { loading: boolean, survey: 
                 credentials: 'include',
             })
             if (response.status === 401) {
-                window.location.href = import.meta.env.VITE_ZTOR_URL + '/login?redirectUrl=' + encodeURIComponent(window.location.href)
+                redirectToLogin()
                 return
             }
 

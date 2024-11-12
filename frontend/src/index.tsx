@@ -16,6 +16,7 @@ import {Admin} from "./admin/admin";
 import {SurveyById, SurveyByIdRouteData} from "./components/company-survey-v2/survey-by-id";
 import {Home} from "./components/home"
 import {ExcelImport} from "./excel-import/excel-import"
+import {NewSurveyByProjectName} from "./components/company-survey-v2/new-survey-by-project-name"
 
 const router = createBrowserRouter([
     {
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
     {
         path: "/bedrijven-v1",
         element: <BedrijvenFormV1 />
+    },
+    {
+        path: "/new-survey/:projectName",
+        element: <NewSurveyByProjectName />,
     },
     {
         path: "/bedrijven-hessenpoort",

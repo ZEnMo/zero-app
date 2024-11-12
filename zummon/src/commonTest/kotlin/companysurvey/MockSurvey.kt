@@ -43,9 +43,9 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                                 size = 1000,
                             ),
                         ),
-                        kleinverbruikOrGrootverbruik = KleinverbruikOrGrootverbruik.KLEINVERBRUIK,
+                        kleinverbruikOrGrootverbruik = KleinverbruikOrGrootverbruik.GROOTVERBRUIK,
                         grootverbruik = CompanyGrootverbruik(
-                            contractedConnectionDeliveryCapacity_kW = 100,
+                            contractedConnectionDeliveryCapacity_kW = 150,
                             contractedConnectionFeedInCapacity_kW = 200,
                             physicalCapacityKw = 300,
                         ),
@@ -148,8 +148,8 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                             numCars = 2,
                             numElectricCars = 0,
                             numChargePoints = 0,
-                            powerPerChargePointKw = 0f,
-                            annualTravelDistancePerCarKm = 0,
+                            powerPerChargePointKw = 55f,
+                            annualTravelDistancePerCarKm = 5500,
                             numPlannedElectricCars = 0,
                             numPlannedHydrogenCars = 2,
                         ),
@@ -157,17 +157,17 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                             numTrucks = 5,
                             numElectricTrucks = 0,
                             numChargePoints = 0,
-                            powerPerChargePointKw = 0f,
-                            annualTravelDistancePerTruckKm = 0,
+                            powerPerChargePointKw = 70f,
+                            annualTravelDistancePerTruckKm = 15000,
                             numPlannedElectricTrucks = 0,
                             numPlannedHydrogenTrucks = 2,
                         ),
                         vans = Vans(
                             numVans = 2,
-                            numElectricVans = 0,
+                            numElectricVans = 3,
                             numChargePoints = 0,
-                            powerPerChargePointKw = 0f,
-                            annualTravelDistancePerVanKm = 0,
+                            powerPerChargePointKw = 23f,
+                            annualTravelDistancePerVanKm = 23000,
                             numPlannedElectricVans = 0,
                             numPlannedHydrogenVans = 2,
                         ),
@@ -182,18 +182,77 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
     )
 )
 
-fun wipeCapacity() = mockSurvey.copy(
-    addresses = mockSurvey.addresses.map {
-        it.copy(
-            gridConnections = it.gridConnections.map { gridConnection ->
-                gridConnection.copy(
-                    electricity = gridConnection.electricity.copy(
-                        grootverbruik = gridConnection.electricity.grootverbruik?.copy(
-                            physicalCapacityKw = null
-                        )
-                    )
-                )
-            }
+fun createMockGridConnectionWithInvalidData() = GridConnection(
+    electricity = Electricity(
+        hasConnection = true,
+        annualElectricityDelivery_kWh = 500,
+        annualElectricityFeedIn_kWh = 2000,  // Invalid: Feed-in is higher than production
+        annualElectricityProduction_kWh = 1000,
+        ean = "999999999999999999",
+        kleinverbruikOrGrootverbruik = KleinverbruikOrGrootverbruik.GROOTVERBRUIK,
+        grootverbruik = CompanyGrootverbruik(
+            contractedConnectionDeliveryCapacity_kW = 100,  // Invalid: Exceeds physical capacity
+            contractedConnectionFeedInCapacity_kW = 70,   // Invalid: Exceeds physical capacity
+            physicalCapacityKw = 50   // Invalid: Less than 55.2 for grootverbruik
+        ),
+        kleinverbruik = CompanyKleinverbruik(
+            connectionCapacity = null
+        ),
+
+        ),
+    storage = Storage(
+        batteryPowerKw = 0f,
+    ),
+    transport = Transport(
+        cars = Cars(
+            powerPerChargePointKw = 170f,  // Invalid: Greater than 150 kW
+            annualTravelDistancePerCarKm = 200000,  // Invalid: Greater than 100k km
+        ),
+        trucks = Trucks(
+            annualTravelDistancePerTruckKm = 100000,  // Valid
+        ),
+        vans = Vans(
+            numVans = 8,
+            numElectricVans = 10,
+            powerPerChargePointKw = 200f,  // Invalid: Greater than 150 kW
+            annualTravelDistancePerVanKm = 50000,  // Valid
         )
-    },
+    )
 )
+
+fun Survey.changeGridConnection(function: (gridConnection: GridConnection) -> GridConnection): Survey =
+    copy(
+        addresses = addresses.map {
+            it.copy(
+                gridConnections = it.gridConnections.map { gridConnection ->
+                    function(gridConnection)
+                }
+            )
+        },
+    )
+
+fun updateElectricity(): Survey {
+    return mockSurvey.changeGridConnection {
+        it.copy(
+            electricity = it.electricity.copy(kleinverbruikOrGrootverbruik = null)
+        )
+    }
+}
+fun updateCapacity(capacity: CompanyGrootverbruik): Survey {
+    return mockSurvey.changeGridConnection {
+        it.copy(
+            electricity = it.electricity.copy(
+                grootverbruik = it.electricity.grootverbruik?.copy(
+                    contractedConnectionDeliveryCapacity_kW = capacity.contractedConnectionDeliveryCapacity_kW,
+                    physicalCapacityKw = capacity.physicalCapacityKw
+                )
+            )
+        )
+    }
+}
+
+fun updateMockSurveyWithInvalidData(): Survey {
+    return mockSurvey.changeGridConnection {
+        createMockGridConnectionWithInvalidData()
+    }
+}

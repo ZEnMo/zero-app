@@ -8,6 +8,8 @@ export type ProjectConfiguration = {
 
 export type ProjectName = 'Hessenpoort' | 'De Wieken'
 
+export const castProjectName: (projectName: string) => ProjectName = projectName => projectName as ProjectName
+
 export const HESSENPOORT: ProjectConfiguration = {
     name: 'Hessenpoort',
     email: 'info@ondernemersvereniginghessenpoort.nl',
@@ -21,13 +23,16 @@ export const DE_WIEKEN: ProjectConfiguration = {
     authorizationPdf: '/machtiging-datadeling-de-wieken.pdf'
 }
 
-export const getProjectConfiguration = (projectName: ProjectName): ProjectConfiguration => {
-    switch (projectName) {
-        case 'Hessenpoort':
-            return HESSENPOORT
-        case 'De Wieken':
-            return DE_WIEKEN
-        default:
-            throw new Error(`Unknown project name: ${projectName}`)
-    }
+const GENERIC: ProjectConfiguration = {
+    name: castProjectName('Placeholder project'),
+    email: 'info@zenmo.com',
+    authorizationPdf: '/placeholer-machtiging.pdf'
 }
+
+const configs: Record<ProjectName, ProjectConfiguration> = {
+    'Hessenpoort': HESSENPOORT,
+    'De Wieken': DE_WIEKEN,
+}
+
+export const getProjectConfiguration = (projectName: ProjectName): ProjectConfiguration =>
+    configs[projectName] || { ...GENERIC, name: projectName }

@@ -1,8 +1,11 @@
 package com.zenmo.orm.companysurvey
 
 import com.zenmo.orm.companysurvey.table.ProjectTable
+import com.zenmo.orm.user.table.UserProjectTable
 import com.zenmo.zummon.companysurvey.Project
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.anyFrom
 import org.jetbrains.exposed.sql.insertReturning
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -36,5 +39,25 @@ class ProjectRepository(
                     )
                 }
                 .single()
+        }
+
+    @OptIn(ExperimentalUuidApi::class)
+    fun getProjects(userId: UUID): List<Project> =
+        transaction(db) {
+            ProjectTable.selectAll()
+                .where {
+                    ProjectTable.id eq anyFrom(
+                        UserProjectTable.select(UserProjectTable.projectId)
+                            .where { UserProjectTable.userId eq userId }
+                    )
+                }
+                .map {
+                    Project(
+                        it[ProjectTable.id].toKotlinUuid(),
+                        it[ProjectTable.name],
+                        it[ProjectTable.energiekeRegioId],
+                        it[ProjectTable.buurtCodes],
+                    )
+                }
         }
 }

@@ -29,10 +29,16 @@ module.exports = (context) => {
         .substring(0, maxBranchLength)
         .replaceAll(/-*$/g, '') // remove trailing dashes because it would lead to an invalid name
 
+    const versionIdentifier = `${shortBranch}-${context.runNumber}`
+
     return {
-        ZTOR_PR_CONTAINER_APP_NAME:  `${containerAppBaseName}-${shortBranch}-${context.runNumber}`,
-        VERSION_TAG: `${shortBranch}-${context.runNumber}-${shortCommit}`,
+        ZTOR_PR_CONTAINER_APP_NAME:  `${containerAppBaseName}-${versionIdentifier}`,
+        VERSION_TAG: `${versionIdentifier}-${shortCommit}`,
         GITHUB_ENVIRONMENT: getEnvironment(context),
+        GITHUB_SWARM_ENVIRONMENT: `swarm-${getEnvironment(context)}`,
+        // handled by wildcard certificate
+        FRONTEND_HOSTNAME: `frontend-${versionIdentifier}.zero.zenmo.com`,
+        ZTOR_HOSTNAME: `ztor-${versionIdentifier}.zero.zenmo.com`,
     }
 }
 

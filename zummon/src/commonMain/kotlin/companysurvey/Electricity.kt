@@ -37,12 +37,28 @@ data class Electricity (
         return hasConnection ?: false
     }
     
-    fun getContractedConnectionCapacityKw(): Int? {
-        return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.contractedConnectionDeliveryCapacity_kW
+    fun getContractedConnectionCapacityKw(): Double? {
+        when(kleinverbruikOrGrootverbruik) {
+            KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> return grootverbruik?.contractedConnectionDeliveryCapacity_kW?.toDouble()
+            KleinverbruikOrGrootverbruik.KLEINVERBRUIK -> return kleinverbruik?.connectionCapacity?.toKw()
+            else -> return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.contractedConnectionDeliveryCapacity_kW?.toDouble()
+        }
     }
 
-    fun getPhysicalConnectionCapacityKw(): Int? {
-        return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.physicalCapacityKw
+    fun getPhysicalConnectionCapacityKw(): Double? {
+        when(kleinverbruikOrGrootverbruik) {
+            KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> return grootverbruik?.physicalCapacityKw?.toDouble()
+            KleinverbruikOrGrootverbruik.KLEINVERBRUIK -> return kleinverbruik?.connectionCapacity?.toKw()
+            else -> return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.physicalCapacityKw?.toDouble()
+        }
+    }
+
+    fun getContractedFeedInCapacityKw(): Double? {
+        when (kleinverbruikOrGrootverbruik) {
+            KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> return grootverbruik?.contractedConnectionFeedInCapacity_kW?.toDouble()
+            KleinverbruikOrGrootverbruik.KLEINVERBRUIK -> return kleinverbruik?.connectionCapacity?.toKw()
+            else -> return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.contractedConnectionFeedInCapacity_kW?.toDouble()
+        }
     }
 }
 
@@ -102,17 +118,17 @@ enum class KleinverbruikElectricityConnectionCapacity {
     _3x80A, // majority of connections in 613 postalcodes
     ;// Unknown in 39 postalcodes
 
-    fun toKw(): Int {
+    fun toKw(): Double {
         return when (this) {
-            _1x25A -> 1 * 25
-            _1x35A -> 1 * 35
-            _1x40A -> 1 * 40
-            _1x50A -> 1 * 50
-            _3x25A -> 3 * 25
-            _3x35A -> 3 * 35
-            _3x50A -> 3 * 50
-            _3x63A -> 3 * 63
-            _3x80A -> 3 * 80
+            _1x25A -> (1 * 25 * 230 * 0.001)
+            _1x35A -> (1 * 35 * 230 * 0.001)
+            _1x40A -> (1 * 40 * 230 * 0.001)
+            _1x50A -> (1 * 50 * 230 * 0.001)
+            _3x25A -> (3 * 25 * 230 * 0.001)
+            _3x35A -> (3 * 35 * 230 * 0.001)
+            _3x50A -> (3 * 50 * 230 * 0.001)
+            _3x63A -> (3 * 63 * 230 * 0.001)
+            _3x80A -> (3 * 80 * 230 * 0.001)
         }
     }
 

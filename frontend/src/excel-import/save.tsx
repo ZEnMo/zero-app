@@ -45,9 +45,14 @@ export const Save: FunctionComponent<{survey: Survey}> = ({survey}) => {
     }
 
     return (
-        <div style={{margin: "1rem"}}>
-            {errorMessage && <Message style={{marginBottom: "1rem"}} severity="error" text={errorMessage} />}
-            <Button label="Opslaan" icon="pi pi-save" onClick={save} />
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            paddingTop: "3rem"
+        }}>
+            {errorMessage && <Message style={{marginBottom: "1rem"}} severity="error" text={errorMessage}/>}
+            <Button label="Opslaan" icon="pi pi-save" onClick={save}/>
         </div>
     )
 }

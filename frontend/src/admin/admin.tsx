@@ -14,6 +14,8 @@ import {DeeplinkButton} from "./deeplink-button"
 import {ZeroLayout} from "../components/zero-layout"
 
 import {ImportExcelButton} from "./import-excel-button"
+import {NewSurveyButton} from "./new-survey-button"
+import {AdminButtonRow} from "./admin-button-row"
 
 export const Admin: FunctionComponent = () => {
     const {loading, surveys, removeSurvey} = useSurveys()
@@ -25,7 +27,8 @@ export const Admin: FunctionComponent = () => {
         <PrimeReactProvider>
             <ZeroLayout subtitle="Beheer uitvraag bedrijven">
                 <div css={{margin: '1rem'}}>
-                    <ImportExcelButton/>
+                    <AdminButtonRow/>
+                </div>
                     <DataTable
                         value={surveys}
                         loading={loading}
@@ -65,7 +68,6 @@ export const Admin: FunctionComponent = () => {
                             </div>
                         )}/>
                     </DataTable>
-                </div>
             </ZeroLayout>
         </PrimeReactProvider>
     )

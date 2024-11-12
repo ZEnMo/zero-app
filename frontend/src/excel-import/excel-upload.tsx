@@ -12,7 +12,12 @@ export const ExcelUpload: FunctionComponent<{
     const resetErrorMessage = () => setErrorMessage("")
 
     return (
-        <div>
+        <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            paddingTop: "3rem"
+        }}>
             <FileUpload
                 mode="basic"
                 name="file"

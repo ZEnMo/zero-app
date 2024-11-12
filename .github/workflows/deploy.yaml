@@ -16,6 +16,9 @@ jobs:
             VERSION_TAG: ${{ fromJson(steps.variables.outputs.result).VERSION_TAG }}
             ZTOR_PR_CONTAINER_APP_NAME: ${{ fromJson(steps.variables.outputs.result).ZTOR_PR_CONTAINER_APP_NAME }}
             GITHUB_ENVIRONMENT: ${{ fromJson(steps.variables.outputs.result).GITHUB_ENVIRONMENT }}
+            GITHUB_SWARM_ENVIRONMENT: ${{ fromJson(steps.variables.outputs.result).GITHUB_SWARM_ENVIRONMENT }}
+            FRONTEND_HOSTNAME: ${{ fromJson(steps.variables.outputs.result).FRONTEND_HOSTNAME }}
+            ZTOR_HOSTNAME: ${{ fromJson(steps.variables.outputs.result).ZTOR_HOSTNAME }}
         steps:
             -   uses: actions/checkout@v4
                 with:
@@ -70,23 +73,46 @@ jobs:
             ## Buildx is needed for caching
             -   name: Set up Buildx
                 uses: docker/setup-buildx-action@v2
-            ## TODO: this is under erikvv's GitHub Container Registry (ghcr.io)
-            ## because Zenmo used to be on a legacy GitHub plan.
-            -   name: Login to Azure Container Registry
-                uses: docker/login-action@v2
+            -   name: Login to GitHub Container Registry
+                uses: docker/login-action@v3
                 with:
                     registry: ghcr.io
-                    username: erikvv
-                    password: ${{ secrets.ERIKVV_GHCR_PUSH_PASSWORD }}
+                    username: ${{ github.actor }}
+                    password: ${{ secrets.GITHUB_TOKEN }}
             -   name: Build and push
-                uses: docker/build-push-action@v4
+                uses: docker/build-push-action@v6
                 with:
                     push: true
-                    tags: ghcr.io/erikvv/ztor:${{ needs.variables.outputs.VERSION_TAG }}
+                    file: ./docker/production/ztor/Dockerfile
+                    tags: ghcr.io/zenmo/ztor:${{ needs.variables.outputs.VERSION_TAG }}
                     cache-from: type=gha
                     cache-to: type=gha,mode=max
 
-    migrate:
+    build-frontend:
+        needs: variables
+        environment: ${{ needs.variables.outputs.GITHUB_SWARM_ENVIRONMENT }}
+        runs-on: ubuntu-latest
+        steps:
+            ## Buildx is needed for caching
+            -   name: Set up Buildx
+                uses: docker/setup-buildx-action@v2
+            -   name: Login to Azure Container Registry
+                uses: docker/login-action@v3
+                with:
+                    registry: ghcr.io
+                    username: ${{ github.actor }}
+                    password: ${{ secrets.GITHUB_TOKEN }}
+            -   name: Build and push
+                uses: docker/build-push-action@v6
+                with:
+                    push: true
+                    file: ./docker/production/frontend/Dockerfile
+                    tags: ghcr.io/zenmo/zero-frontend:${{ needs.variables.outputs.VERSION_TAG }}
+                    build-args: VITE_ZTOR_URL=https://${{ vars.ZTOR_HOSTNAME || needs.variables.outputs.ZTOR_HOSTNAME }}
+                    cache-from: type=gha
+                    cache-to: type=gha,mode=max
+
+    migrate-azure:
         needs:
             - variables
         environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
@@ -108,9 +134,31 @@ jobs:
             -   name: migrate
                 run: flyway migrate
 
-    deploy-ztor:
+    migrate-swarm:
         needs:
-            - migrate
+            - variables
+        environment: ${{ needs.variables.outputs.GITHUB_SWARM_ENVIRONMENT }}
+        runs-on: ubuntu-latest
+        container:
+            image: redgate/flyway:10.2.0
+            env:
+                ## TODO: in case of pull request, copy and migrate test database
+                FLYWAY_URL: jdbc:postgresql://postgres.zenmo.com:5432/${{ vars.DB_NAME }}
+                FLYWAY_USER: ${{ vars.DB_NAME }}
+                FLYWAY_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                FLYWAY_LOCATIONS: filesystem:./migrations
+                FLYWAY_BASELINE_ON_MIGRATE: true
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+                with:
+                    sparse-checkout: migrations
+            -   name: migrate
+                run: flyway migrate
+
+    deploy-ztor-azure:
+        needs:
+            - migrate-azure
             - build-ztor
             - variables
             - environment-variables
@@ -147,13 +195,47 @@ jobs:
                         BASE_URL=https://${{ needs.environment-variables.outputs.ZTOR_CONTAINER_APP_NAME }}.zero.zenmo.com
                         --ingress external
                         --tags branch=${{ github.head_ref || github.ref_name }} 
-                        --image ghcr.io/erikvv/ztor:${{ needs.variables.outputs.VERSION_TAG }}
-                        --registry-username erikvv
-                        --registry-password ${{ secrets.ERIKVV_GHCR_PULL_PASSWORD }}
+                        --image ghcr.io/zenmo/ztor:${{ needs.variables.outputs.VERSION_TAG }}
+                        --registry-username ${{ github.actor }}
+                        --registry-password ${{ secrets.GITHUB_TOKEN }}
                         --registry-server ghcr.io
                         --cpu 1.5
                         --memory 3
                         --min-replicas 0
+
+    deploy-swarm:
+        needs:
+            - migrate-swarm
+            - build-ztor
+            - build-frontend
+            - variables
+            - environment-variables
+        environment: ${{ needs.variables.outputs.GITHUB_SWARM_ENVIRONMENT }}
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Check out repository
+                uses: actions/checkout@v4
+                with:
+                    sparse-checkout: docker/production
+            -   name: Deploy to Docker Swarm
+                uses: sagebind/docker-swarm-deploy-action@v2
+                env:
+                    TAG: ${{ needs.variables.outputs.VERSION_TAG }}
+                    FRONTEND_HOSTNAME: ${{ vars.FRONTEND_HOSTNAME || needs.variables.outputs.FRONTEND_HOSTNAME }}
+                    ZTOR_HOSTNAME: ${{ vars.ZTOR_HOSTNAME || needs.variables.outputs.ZTOR_HOSTNAME }}
+                    DB_NAME: ${{ vars.DB_NAME }}
+                    POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                    AZURE_STORAGE_ACCOUNT_NAME: zerostore
+                    AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+                    AZURE_STORAGE_CONTAINER: ${{ vars.AZURE_STORAGE_CONTAINER }}
+                    CORS_ALLOW_ORIGIN_PATTERN: ${{ vars.CORS_ALLOW_ORIGIN_PATTERN }}
+                    OAUTH_CLIENT_ID: ${{ vars.OAUTH_CLIENT_ID }}
+                    OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+                with:
+                    remote_host: ssh://root@server.zenmo.com
+                    ssh_private_key: ${{ secrets.SWARM_SSH_PRIVATE_KEY }}
+                    ssh_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ1E4LUG22qgzc8U7oNYGWCn0cyA31+iyX2pck9wcPMS
+                    args: stack deploy --compose-file ./docker/production/compose.yaml zero-${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
 
     build-deploy-static-site:
         name: Build and deploy static site
