@@ -9,14 +9,12 @@ import com.zenmo.zummon.BenasherUuidSerializer
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
 
 /**
  * This contains values parsed from a CSV/excel or fetched from an API.
  */
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
 data class TimeSeries (
@@ -48,9 +46,36 @@ data class TimeSeries (
         }
     }
 
-    fun hasFullYear(year: Int): Boolean =
-        this.start <=  Instant.parse("$year-01-01T00:00:00+01:00")
-                && this.calculateEnd() >= Instant.parse("${year+1}-01-01T00:00:00+01:00")
+    fun hasFullYear(year: Int? = null): Boolean {
+        return try {
+            val workingYear = year ?: this.start.toLocalDateTime(TimeZone.of("UTC+01:00")).year
+            val startOfYear = Instant.parse("$workingYear-01-01T00:00:00+01:00")
+            val endOfYear = Instant.parse("${workingYear + 1}-01-01T00:00:00+01:00")
+            this.start <= startOfYear && this.calculateEnd() >= endOfYear
+        } catch (e: Exception) {
+            println("Time zone error: Falling back to UTC. ${this.start} Error: ${e.message}")
+            false
+        }
+    }
+
+    fun lengthEmptyGapsData(): Int {
+        var maxNullSequence = 0
+        var currentNullSequence = 0
+
+        for (value in values) {
+            if (value.isNaN() || value == 0f) {
+                currentNullSequence++
+                if (currentNullSequence > maxNullSequence) {
+                    maxNullSequence = currentNullSequence
+                }
+            } else {
+                currentNullSequence = 0 // Reset counter when encountering a non-null value
+            }
+        }
+
+        return maxNullSequence
+    }
+
 
     /**
      * Get a full calendar year of data if it is present.
@@ -84,7 +109,7 @@ data class TimeSeries (
         assertHasNumberOfValuesForOneYear()
 
         val end = calculateEnd()
-        val year = end.toLocalDateTime(TimeZone.of("Europe/Amsterdam")).year
+        val year = end.toLocalDateTime(TimeZone.of("UTC+01:00")).year
         val start = Instant.parse("$year-01-01T00:00:00+01:00")
         val numValuesInCurrentYear = ((end - start) / timeStep).toInt()
 
@@ -125,14 +150,12 @@ data class TimeSeries (
     }
 }
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 enum class TimeSeriesUnit {
     KWH,
     M3,
 }
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 enum class TimeSeriesType {
     // Delivery from grid to end-user

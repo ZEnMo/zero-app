@@ -6,7 +6,6 @@ import com.zenmo.orm.connectToPostgres
 import com.zenmo.orm.deeplink.DeeplinkRepository
 import com.zenmo.ztor.deeplink.DeeplinkService
 import com.zenmo.ztor.errorMessageToJson
-import com.zenmo.ztor.user.UserSession
 import com.zenmo.ztor.user.getUserId
 import com.zenmo.zummon.companysurvey.Survey
 import io.ktor.http.*
@@ -16,7 +15,6 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sessions.*
 import org.jetbrains.exposed.sql.Database
 import java.util.*
 
@@ -50,7 +48,7 @@ fun Application.configureDatabases(): Database {
                 return@post
             }
 
-            val surveyId = surveyRepository.save(survey)
+            val surveyId = surveyRepository.save(survey, call.getUserId())
 
             val deeplink = deeplinkService.generateDeeplink(surveyId)
 
@@ -67,14 +65,14 @@ fun Application.configureDatabases(): Database {
 
             val repository = SurveyRepository(db)
 
-            val project = call.request.queryParameters.get("project")
-            if (project != null) {
-                val surveys = repository.getSurveysByProjectWithUserAccessCheck(project, userId)
-                call.respond(HttpStatusCode.OK, surveys)
-                return@get
-            }
+            val includeInSimulation = call.request.queryParameters["includeInSimulation"]?.toBoolean()
+            val project = call.request.queryParameters["project"]
 
-            val surveys = repository.getSurveysByUser(userId)
+            val surveys = repository.getSurveys(
+                userId = userId,
+                project = project,
+                includeInSimulation = includeInSimulation,
+            )
 
             call.respond(HttpStatusCode.OK, surveys)
         }
@@ -147,6 +145,21 @@ fun Application.configureDatabases(): Database {
             val deeplink = deeplinkService.generateDeeplink(surveyId)
 
             call.respond(HttpStatusCode.Created, deeplink)
+        }
+
+        // set active state
+        put("/company-surveys/{surveyId}/include-in-simulation") {
+            val userId = call.getUserId()
+            if (userId == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@put
+            }
+
+            val surveyId = UUID.fromString(call.parameters["surveyId"])
+            val includeInSimulation = call.receive<Boolean>()
+            surveyRepository.setIncludeInSimulation(surveyId, userId, includeInSimulation)
+
+            call.respond(HttpStatusCode.OK)
         }
     }
 

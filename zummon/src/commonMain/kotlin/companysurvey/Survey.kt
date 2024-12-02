@@ -4,22 +4,21 @@ import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import kotlinx.serialization.Serializable
 import com.zenmo.zummon.BenasherUuidSerializer
+import com.zenmo.zummon.User
 import kotlinx.datetime.*
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlinx.serialization.json.Json
 
 /**
  * Root object
  */
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
 data class Survey(
     @Serializable(with = BenasherUuidSerializer::class)
     val id: Uuid = uuid4(),
-    val created: Instant = Clock.System.now().roundToMilliseconds(),
+    val createdAt: Instant = Clock.System.now().roundToMilliseconds(),
     val zenmoProject: String,
     val companyName: String,
     val personName: String,
@@ -27,6 +26,8 @@ data class Survey(
     val dataSharingAgreed: Boolean = false,
     val addresses: List<Address>,
     val project: Project? = null,
+    val createdBy: User? = null,
+    val includeInSimulation: Boolean = true,
 ) {
     /**
      * For JavaScript
@@ -45,8 +46,17 @@ data class Survey(
         }
     }
 
-    public val createdToString: String
-        get() = created.toString()
+    /**
+     * For sorting in JavaScript primereact/datatable
+     */
+    public val createdAtToString: String
+        get() = createdAt.toString()
+
+    /**
+     * For sorting in JavaScript primereact/datatable
+     */
+    public val createdByToString: String
+        get() = createdBy?.note ?: ""
 
     public val filesArray: Array<File>
         get() = addresses.flatMap {
@@ -136,6 +146,10 @@ data class Survey(
         )
     }
 
+    public fun withIncludeInSimulation(includeInSimulation: Boolean): Survey {
+        return this.copy(includeInSimulation = includeInSimulation)
+    }
+
     @OptIn(ExperimentalSerializationApi::class)
     public fun toPrettyJson(): String {
         val prettyJson = Json { // this returns the JsonBuilder
@@ -147,13 +161,11 @@ data class Survey(
     }
 }
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 fun surveyFromJson(json: String): Survey {
     return kotlinx.serialization.json.Json.decodeFromString(Survey.serializer(), json)
 }
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 fun surveysFromJson(json: String): Array<Survey> {
     return kotlinx.serialization.json.Json.decodeFromString<Array<Survey>>(json)
@@ -174,7 +186,6 @@ private fun <T> List<T>.firstAndOnly(): T {
     return this.first()
 }
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
 data class SurveyWithErrors(

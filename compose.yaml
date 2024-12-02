@@ -10,7 +10,7 @@ services:
         env_file:
             - docker/local/flyway.env
         environment:
-            FLYWAY_URL: jdbc:postgresql://postgres:5432/postgres
+            FLYWAY_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-postgres}
             FLYWAY_USER: postgres
         depends_on:
             - postgres
@@ -63,7 +63,7 @@ services:
             POSTGRES_URL: jdbc:postgresql://postgres:5432/postgres
             POSTGRES_USER: postgres
             BASE_URL: http://localhost:8082
-            CORS_ALLOW_ORIGIN_PATTERN: 'http://localhost:1234'
+            CORS_ALLOW_ORIGIN_PATTERN: 'http://localhost:3000'
             # Keycloak test realm JWK
             ACCESS_TOKEN_JWK: |
                 {
@@ -85,7 +85,7 @@ services:
         env_file:
             - docker/local/ztor.env
         environment:
-            POSTGRES_URL: jdbc:postgresql://postgres:5432/postgres
+            POSTGRES_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-postgres}
             POSTGRES_USER: postgres
 
     ztor-test:

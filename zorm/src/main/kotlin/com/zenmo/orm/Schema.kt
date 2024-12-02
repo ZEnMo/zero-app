@@ -11,6 +11,7 @@ import com.zenmo.orm.user.table.UserTable
 import com.zenmo.orm.user.table.UserProjectTable
 import com.zenmo.zummon.companysurvey.*
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Schema
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 

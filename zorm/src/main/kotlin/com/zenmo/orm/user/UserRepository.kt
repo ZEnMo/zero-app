@@ -12,10 +12,16 @@ fun getUserById(db: Database, id: UUID): User? {
     return null
 }
 
-fun saveUser(db: Database, userId: UUID, projectIds: List<UUID>) {
+fun saveUser(
+    db: Database,
+    userId: UUID,
+    projectIds: List<UUID> = emptyList(),
+    note: String = "",
+) {
     transaction(db) {
         UserTable.insert {
             it[id] = userId
+            it[UserTable.note] = note
         }
 
         UserProjectTable.batchInsert(projectIds) {

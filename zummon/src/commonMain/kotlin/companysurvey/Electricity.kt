@@ -1,10 +1,8 @@
 package com.zenmo.zummon.companysurvey
 import com.zenmo.zummon.companysurvey.KleinverbruikElectricityConnectionCapacity.valueOf
 import kotlinx.serialization.Serializable
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
 data class Electricity (
@@ -91,7 +89,6 @@ data class CompanyGrootverbruik (
         get() = contractedConnectionFeedInCapacity_kW
 }
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 enum class KleinverbruikOrGrootverbruik {
     KLEINVERBRUIK,

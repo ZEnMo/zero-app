@@ -1,5 +1,5 @@
 
-val ktor_version = "3.0.0-rc-2"
+val ktor_version = "3.0.1"
 
 plugins {
     kotlin("jvm")
@@ -80,8 +80,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("com.benasher44:uuid:0.8.4")
 
-    testImplementation("io.ktor:ktor-server-tests-jvm:3.0.0-rc-1-eap-1042")
+    testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.20")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
 
 tasks.withType<Test> {

@@ -14,6 +14,7 @@ export const Save: FunctionComponent<{survey: Survey}> = ({survey}) => {
         try {
             const response = await fetch(url, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',

@@ -29,11 +29,12 @@ export const BedrijvenFormV1: FunctionComponent = () => {
         try {
             const response = await fetch(url, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify(values)
+                body: JSON.stringify(values),
             })
 
             if (response.status !== 201) {

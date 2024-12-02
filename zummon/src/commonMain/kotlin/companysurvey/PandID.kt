@@ -9,7 +9,6 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
 val pandIdRegex = Regex("^\\d{16}\$")
@@ -17,7 +16,6 @@ val pandIdRegex = Regex("^\\d{16}\$")
 /**
  * Would prefer it if it was an inline value class but JS export does not support it
  */
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable(with = PandIdSerializer::class)
 data class PandID(val value: String) {

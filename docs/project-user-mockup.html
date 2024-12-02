@@ -1,0 +1,287 @@
+<style>
+    table {
+        border-collapse: collapse;
+    }
+
+    td {
+        border: 1px solid grey;
+        padding: .5rem;
+    }
+
+    ul {
+        margin: 0;
+    }
+
+    .scope {
+        background-color: lightgreen;
+        border: 1px solid green;
+        padding: .3rem;
+        border-radius: .4rem;
+    }
+
+    body {
+        max-width: 24rem;
+    }
+</style>
+
+<h1>Projects</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Users</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Perzikgaard</td>
+        <td>
+            <ul>
+                <li>Erik</li>
+                <li>Maria</li>
+            </ul>
+        </td>
+        <td>
+            <button>edit</button>
+        </td>
+    </tr>
+    <tr>
+        <td>Achterdijk</td>
+        <td>
+            <ul>
+                <li>Maria</li>
+            </ul>
+        </td>
+        <td>
+            <button>edit</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br/>
+
+<button>add</button>
+
+<br/>
+<br/>
+<br/>
+<hr />
+
+<h1>Project Page</h1>
+
+Name <input value="Perzikgaard"/>
+<p>(etc for simple fields)</p>
+
+<button>save</button>
+
+<h3>Project users</h3>
+
+<p>Visible after project has been created</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Scope</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Erik</td>
+        <td>
+            <span class="scope">Read</span>
+            <span class="scope">Write</span>
+        </td>
+        <td>
+            <button>edit</button>
+            <button>unlink</button>
+        </td>
+    </tr>
+    <tr>
+        <td>Maria</td>
+        <td>
+            <span class="scope">Write</span>
+        </td>
+        <td>
+            <button>edit</button>
+            <button>unlink</button>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <select>
+                <option>Auke</option>
+                <option>Luc</option>
+            </select>
+        </td>
+        <td>
+            <label style="display: block"><input type="checkbox" checked>Read</label>
+            <label style="display: block"><input type="checkbox">Write</label>
+        </td>
+        <td>
+            <button>save</button>
+            <button>cancel</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br/>
+
+<button>add</button>
+
+<br/>
+<br/>
+<br/>
+<hr />
+
+<h1>Users</h1>
+
+<table>
+    <thead>
+    <tr>
+        <th>Keycloak ID</th>
+        <th>Note</th>
+        <th>Projects</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>000-000-000</td>
+        <td>Erik</td>
+        <td>
+            <ul>
+                <li>Perzikgaard</li>
+                <li>Achterdijk</li>
+            </ul>
+        </td>
+        <td>
+            <button>edit</button>
+        </td>
+    </tr>
+    <tr>
+        <td>000-000-001</td>
+        <td>Maria</td>
+        <td>
+            <ul>
+                <li>Perzikgaard</li>
+            </ul>
+        </td>
+        <td>
+            <button>edit</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br/>
+
+<button>add</button>
+
+<br/>
+<br/>
+<br/>
+<hr />
+
+<h1>User page</h1>
+
+Keycloak ID <input/> <br/><br/>
+Note <input/>
+
+<h3>User projects</h3>
+
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Scope</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Perzikgaard</td>
+        <td>
+            <span class="scope">Read</span>
+            <span class="scope">Write</span>
+        </td>
+        <td>
+            <button>edit</button>
+            <button>unlink</button>
+        </td>
+    </tr>
+    <tr>
+        <td>Achterdijk</td>
+        <td>
+            <span class="scope">Write</span>
+        </td>
+        <td>
+            <button>edit</button>
+            <button>unlink</button>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <select>
+                <option>Hessenpark</option>
+                <option>Eikenrups</option>
+            </select>
+        </td>
+        <td>
+            <label style="display: block"><input type="checkbox" checked>Read</label>
+            <label style="display: block"><input type="checkbox">Write</label>
+        </td>
+        <td>
+            <button>save</button>
+            <button>cancel</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<h3>User companies</h3>
+
+<p>(survey == company)</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Project</th>
+        <th>Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Eikenrups</td>
+        <td>IJzerboer B.V.</td>
+        <td>
+            <button>unlink</button>
+        </td>
+    </tr>
+    <tr>
+        <td>Eikenrups</td>
+        <td>De Waterstofbakker B.V.</td>
+        <td>
+            <button>unlink</button>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <select>
+                <option>Eikenrups</option>
+                <option>Hessenvaan</option>
+            </select>
+        </td>
+        <td>
+            <select>
+                <option>Autohandelaar B.V.</option>
+                <option>Houtzagerij B.V.</option>
+            </select>
+        </td>
+        <td>
+            <button>Add</button>
+        </td>
+    </tr>
+    </tbody>
+</table>

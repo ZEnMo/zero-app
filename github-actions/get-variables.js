@@ -34,8 +34,8 @@ module.exports = (context) => {
     return {
         ZTOR_PR_CONTAINER_APP_NAME:  `${containerAppBaseName}-${versionIdentifier}`,
         VERSION_TAG: `${versionIdentifier}-${shortCommit}`,
-        GITHUB_ENVIRONMENT: getEnvironment(context),
-        GITHUB_SWARM_ENVIRONMENT: `swarm-${getEnvironment(context)}`,
+        DOCKER_STACK_NAME: `zero-${getEnvironment(context)}`,
+        GITHUB_ENVIRONMENT: `swarm-${getEnvironment(context)}`,
         // handled by wildcard certificate
         FRONTEND_HOSTNAME: `frontend-${versionIdentifier}.zero.zenmo.com`,
         ZTOR_HOSTNAME: `ztor-${versionIdentifier}.zero.zenmo.com`,

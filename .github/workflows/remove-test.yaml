@@ -5,36 +5,12 @@ on:
         types: [ closed ]
 
 jobs:
-    ## TODO: remove images from registry after pull request closed
+    ## TODO:
+    ## - remove images from registry after pull request closed
+    ## - remove pull request environments after pull request closed
     remove-test:
         if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.head_ref != 'main' && github.head_ref != 'production'
         runs-on: ubuntu-latest
         steps:
-            -   name: Log in to Azure
-                uses: azure/login@v1
-                with:
-                    creds: ${{ secrets.ZERO_AZURE_CREDENTIALS }}
-            -   name: Remove app
-                uses: azure/CLI@v1
-                with:
-                    azcliversion: 2.51.0
-                    inlineScript: >
-                        set -ex
-                        
-                        az containerapp list
-                        --resource-group Zenmo_Zero
-                        | jq -r '.[] | select(.tags.branch == "${{ github.head_ref }}") | .name'
-                        | xargs -I {} az containerapp delete --resource-group Zenmo_Zero --name {} --yes
-
-    remove-static-site:
-        if: github.event_name == 'pull_request' && github.event.action == 'closed'
-        runs-on: ubuntu-latest
-        name: Remove static site on pull request close
-        environment: 'pullrequest'
-        steps:
-            -   name: Close Pull Request
-                id: closepullrequest
-                uses: Azure/static-web-apps-deploy@v1
-                with:
-                    azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APP_API_TOKEN }}
-                    action: "close"
+            -   name: Todo
+                run: echo todo

@@ -21,8 +21,8 @@ class FuduraClientTest {
         }.filter {
             it.unitOfMeasurement == UnitOfMeasurement.kWh
                     && it.interval != null
-                    && it.firstReadingTimestamp < "2024-06"
-                    && it.lastReadingTimestamp > "2024-07"
+                    && it.firstReadingTimestamp < Instant.parse("2024-06-01T00:00:00+01:00")
+                    && it.lastReadingTimestamp > Instant.parse("2024-07-01T00:00:00+01:00")
         }
 
         val channelMetadata = kwhQuarterHourlyChannels.first()
@@ -31,7 +31,7 @@ class FuduraClientTest {
             meteringPointId,
             channelMetadata.channelId,
             from = Instant.parse("2024-01-01T00:00:00+01:00"),
-            to = Instant.parse(channelMetadata.lastReadingTimestamp),
+            to = channelMetadata.lastReadingTimestamp,
         )
         assertTrue(telemetryBatch.telemetry.size > 10)
         assertTrue(telemetryBatch.telemetry.size < 1001)
@@ -40,7 +40,7 @@ class FuduraClientTest {
             meteringPointId,
             channelMetadata.channelId,
             from = Instant.parse("2024-08-01T00:00:00+01:00"),
-            to = Instant.parse(channelMetadata.lastReadingTimestamp),
+            to = channelMetadata.lastReadingTimestamp,
         )
 
         assertTrue(fullTelemetry.size > 1001)

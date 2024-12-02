@@ -4,18 +4,18 @@ import com.zenmo.orm.companysurvey.table.CompanySurveyTable
 import com.zenmo.orm.createSchema
 import com.zenmo.orm.connectToPostgres
 import com.zenmo.orm.user.saveUser
-import com.zenmo.orm.user.table.UserTable
 import com.zenmo.zummon.companysurvey.Survey
 import org.jetbrains.exposed.sql.Schema
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.BeforeClass
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
 class RepositoryTest {
     companion object {
@@ -129,6 +129,34 @@ class RepositoryTest {
             storedSurvey1.addresses.first().gridConnections.first().sequence,
             storedSurvey2.addresses.first().gridConnections.first().sequence,
         )
+    }
+
+    @Test
+    @OptIn(ExperimentalUuidApi::class)
+    fun testCreatorIsSetOnCreateButNotOnEdit() {
+        val db = connectToPostgres()
+        val jaapId = UUID.fromString("bc0ea106-3bac-452e-ae39-5c1b29782001")
+        saveUser(db = db, userId = jaapId, note = "Jaap")
+        val pietId = UUID.fromString("bc0ea106-3bac-452e-ae39-5c1b29782002")
+        saveUser(db = db, userId = pietId, note = "Piet")
+
+        val repo = SurveyRepository(db)
+        // create survey
+        val surveyId = repo.save(createMockSurvey(), jaapId)
+
+        val surveyLoadedAfterCreate = repo.getSurveyById(surveyId)
+        val createdBy = surveyLoadedAfterCreate?.createdBy
+        assertNotNull(createdBy)
+        assertEquals("Jaap", createdBy.note)
+        assertEquals(jaapId.toKotlinUuid(), createdBy.id)
+
+        // edit survey
+        repo.save(surveyLoadedAfterCreate, pietId)
+        val surveyLoadedAfterEdit = repo.getSurveyById(surveyId)
+        val createdBy2 = surveyLoadedAfterEdit?.createdBy
+        assertNotNull(createdBy2)
+        assertEquals("Jaap", createdBy2.note)
+        assertEquals(jaapId.toKotlinUuid(), createdBy2.id)
     }
 
     private fun wipeSequence(survey: Survey)

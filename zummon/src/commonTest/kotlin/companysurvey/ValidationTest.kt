@@ -1,14 +1,10 @@
 package companysurvey
 
-import com.benasher44.uuid.uuid4
 import com.zenmo.zummon.companysurvey.*
-import kotlinx.datetime.Instant
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.hours
 
 class ValidationTest {
     @Test
@@ -22,9 +18,9 @@ class ValidationTest {
         val mockSurvey = createMockSurvey()
         val validationResults = surveyValidator.validate(mockSurvey)
 
-        assertEquals(14, validationResults.size)
+        assertEquals(26, validationResults.size)
         // Check sample validation results
-        val sampleResult = validationResults.last()
+        val sampleResult = validationResults.first()
         assertEquals(Status.VALID, sampleResult.status)
     }
 
@@ -122,7 +118,8 @@ class ValidationTest {
     }
 
     @Test
-    fun testInvalidValidations() {
+    fun invalidValidations() {
+        setLanguage(Language.en)
         val gridConnectionValidator = GridConnectionValidator()
         val electricityValidator = ElectricityValidator()
         val transportValidator = TransportValidator()
@@ -133,6 +130,7 @@ class ValidationTest {
 
         // Test for contracted delivery capacity (should fail)
         var result = electricityValidator.validateContractedCapacity(mockElectric)
+
         assertEquals(result.status, Status.INVALID)
         assertContains(result.message, "exceeds physical capacity")
 
@@ -181,7 +179,5 @@ class ValidationTest {
         assertContains(results.last().message, "exceeds allowed capacity")
 
     }
-
-
 }
 

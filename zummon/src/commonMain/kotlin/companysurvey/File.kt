@@ -1,10 +1,8 @@
 package com.zenmo.zummon.companysurvey
 
 import kotlinx.serialization.Serializable
-import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 @Serializable
 data class File (
@@ -14,7 +12,6 @@ data class File (
     val size: Int,
 )
 
-@OptIn(ExperimentalJsExport::class)
 @JsExport
 fun formatByteSize(size: Int) = when {
     size < 1024 -> "$size B"

@@ -5,12 +5,18 @@ import {Survey, surveysFromJson} from "zero-zummon"
 type UseSurveyReturn = {
     loading: boolean,
     surveys: Survey[],
+    // for syncing the state
+    changeSurvey: (newSurvey: Survey) => void,
     removeSurvey: (surveyId: string) => void,
 }
 
 export const useSurveys = (): UseSurveyReturn => {
     const [loading, setLoading] = useState(true)
     const [surveys, setSurveys] = useState<Survey[]>([])
+
+    const changeSurvey = (newSurvey: Survey) => {
+        setSurveys(surveys.map(survey => survey.id.toString() === newSurvey.id.toString() ? newSurvey : survey))
+    }
 
     useOnce(async () => {
         try {
@@ -37,6 +43,7 @@ export const useSurveys = (): UseSurveyReturn => {
     return {
         loading,
         surveys,
+        changeSurvey,
         removeSurvey,
     }
 }

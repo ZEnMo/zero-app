@@ -19,5 +19,9 @@ export async function ztorFetch<T>(
         throw new Error(await response.text())
     }
 
+    if (response.headers.get("Content-Length") === "0") {
+        return undefined as T
+    }
+
     return await response.json()
 }

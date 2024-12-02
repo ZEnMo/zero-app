@@ -15,8 +15,8 @@ jobs:
         outputs:
             VERSION_TAG: ${{ fromJson(steps.variables.outputs.result).VERSION_TAG }}
             ZTOR_PR_CONTAINER_APP_NAME: ${{ fromJson(steps.variables.outputs.result).ZTOR_PR_CONTAINER_APP_NAME }}
+            DOCKER_STACK_NAME: ${{ fromJson(steps.variables.outputs.result).DOCKER_STACK_NAME }}
             GITHUB_ENVIRONMENT: ${{ fromJson(steps.variables.outputs.result).GITHUB_ENVIRONMENT }}
-            GITHUB_SWARM_ENVIRONMENT: ${{ fromJson(steps.variables.outputs.result).GITHUB_SWARM_ENVIRONMENT }}
             FRONTEND_HOSTNAME: ${{ fromJson(steps.variables.outputs.result).FRONTEND_HOSTNAME }}
             ZTOR_HOSTNAME: ${{ fromJson(steps.variables.outputs.result).ZTOR_HOSTNAME }}
         steps:
@@ -29,19 +29,6 @@ jobs:
                     script: |
                         const getVariables = require('./github-actions/get-variables.js')
                         return getVariables(context)
-
-    environment-variables:
-        runs-on: ubuntu-latest
-        needs:
-            - variables
-        environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
-        outputs:
-            ZTOR_CONTAINER_APP_NAME: ${{ vars.ZTOR_CONTAINER_APP_NAME || needs.variables.outputs.ZTOR_PR_CONTAINER_APP_NAME }}
-        steps:
-            # noop
-            -   uses: actions/github-script@v7
-                with:
-                    script: return
 
     build-vallum:
         needs:
@@ -90,7 +77,7 @@ jobs:
 
     build-frontend:
         needs: variables
-        environment: ${{ needs.variables.outputs.GITHUB_SWARM_ENVIRONMENT }}
+        environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
         runs-on: ubuntu-latest
         steps:
             ## Buildx is needed for caching
@@ -112,32 +99,10 @@ jobs:
                     cache-from: type=gha
                     cache-to: type=gha,mode=max
 
-    migrate-azure:
-        needs:
-            - variables
-        environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
-        runs-on: ubuntu-latest
-        container:
-            image: redgate/flyway:10.2.0
-            env:
-                ## TODO: in case of pull request, copy and migrate test database
-                FLYWAY_URL: jdbc:postgresql://holon-webapp-database.postgres.database.azure.com:5432/${{ vars.DB_NAME }}
-                FLYWAY_USER: ${{ vars.DB_NAME }}
-                FLYWAY_PASSWORD: ${{ secrets.DB_PASSWORD }}
-                FLYWAY_LOCATIONS: filesystem:./migrations
-                FLYWAY_BASELINE_ON_MIGRATE: true
-        steps:
-            -   name: Checkout
-                uses: actions/checkout@v4
-                with:
-                    sparse-checkout: migrations
-            -   name: migrate
-                run: flyway migrate
-
     migrate-swarm:
         needs:
             - variables
-        environment: ${{ needs.variables.outputs.GITHUB_SWARM_ENVIRONMENT }}
+        environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
         runs-on: ubuntu-latest
         container:
             image: redgate/flyway:10.2.0
@@ -156,61 +121,13 @@ jobs:
             -   name: migrate
                 run: flyway migrate
 
-    deploy-ztor-azure:
-        needs:
-            - migrate-azure
-            - build-ztor
-            - variables
-            - environment-variables
-        environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
-        runs-on: ubuntu-latest
-        steps:
-            -   name: Log in to Azure
-                uses: azure/login@v1
-                with:
-                    ## https://github.com/Azure/login#configure-a-service-principal-with-a-secret
-                    creds: ${{ secrets.ZERO_AZURE_CREDENTIALS }}
-            -   name: Deploy
-                uses: azure/CLI@v1
-                with:
-                    ## Use generic azure/CLI@v1 instead of specific azure/container-apps-deploy-action@v1
-                    ## because it supports the options that we want.
-                    azcliversion: 2.51.0
-                    inlineScript: >
-                        az containerapp create
-                        --resource-group Zenmo_Zero
-                        --name ${{ needs.environment-variables.outputs.ZTOR_CONTAINER_APP_NAME }}
-                        --environment ZeroDE
-                        --target-port 8082
-                        --env-vars
-                        POSTGRES_URL=jdbc:postgresql://holon-webapp-database.postgres.database.azure.com:5432/${{ vars.DB_NAME }}
-                        POSTGRES_USER=${{ vars.DB_NAME }}
-                        POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
-                        AZURE_STORAGE_ACCOUNT_NAME=zerostore
-                        AZURE_STORAGE_ACCOUNT_KEY=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
-                        AZURE_STORAGE_CONTAINER=${{ vars.AZURE_STORAGE_CONTAINER }}
-                        CORS_ALLOW_ORIGIN_PATTERN=${{ vars.CORS_ALLOW_ORIGIN_PATTERN }}
-                        OAUTH_CLIENT_ID=${{ vars.OAUTH_CLIENT_ID }}
-                        OAUTH_CLIENT_SECRET=${{ secrets.OAUTH_CLIENT_SECRET }}
-                        BASE_URL=https://${{ needs.environment-variables.outputs.ZTOR_CONTAINER_APP_NAME }}.zero.zenmo.com
-                        --ingress external
-                        --tags branch=${{ github.head_ref || github.ref_name }} 
-                        --image ghcr.io/zenmo/ztor:${{ needs.variables.outputs.VERSION_TAG }}
-                        --registry-username ${{ github.actor }}
-                        --registry-password ${{ secrets.GITHUB_TOKEN }}
-                        --registry-server ghcr.io
-                        --cpu 1.5
-                        --memory 3
-                        --min-replicas 0
-
     deploy-swarm:
         needs:
             - migrate-swarm
             - build-ztor
             - build-frontend
             - variables
-            - environment-variables
-        environment: ${{ needs.variables.outputs.GITHUB_SWARM_ENVIRONMENT }}
+        environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
         runs-on: ubuntu-latest
         steps:
             -   name: Check out repository
@@ -235,51 +152,4 @@ jobs:
                     remote_host: ssh://root@server.zenmo.com
                     ssh_private_key: ${{ secrets.SWARM_SSH_PRIVATE_KEY }}
                     ssh_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ1E4LUG22qgzc8U7oNYGWCn0cyA31+iyX2pck9wcPMS
-                    args: stack deploy --compose-file ./docker/production/compose.yaml zero-${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
-
-    build-deploy-static-site:
-        name: Build and deploy static site
-        runs-on: ubuntu-latest
-        needs:
-            - variables
-            - environment-variables
-        environment: ${{ needs.variables.outputs.GITHUB_ENVIRONMENT }}
-        steps:
-            -   uses: actions/checkout@v3
-            -   uses: actions/setup-java@v4
-                with:
-                    distribution: temurin
-                    java-version: 21
-            -   name: Setup Gradle
-                uses: gradle/actions/setup-gradle@v3
-            -   name: gradle zummon:jsBrowserProductionLibraryDistribution
-                run: gradle zummon:jsBrowserProductionLibraryDistribution
-            -   uses: actions/setup-node@v3
-                with:
-                    node-version: 22
-                    cache: 'npm'
-                    cache-dependency-path: frontend/package-lock.json
-            -   name: Npm install
-                working-directory: frontend
-                run: npm ci
-            -   name: Type check
-                working-directory: frontend
-                run: npx tsc
-            -   name: Test
-                working-directory: frontend
-                run: npm test
-            -   name: Build And Deploy
-                id: builddeploy
-                uses: Azure/static-web-apps-deploy@v1
-                env:
-                    VITE_ZTOR_URL: https://${{ needs.environment-variables.outputs.ZTOR_CONTAINER_APP_NAME }}.zero.zenmo.com
-                with:
-                    azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APP_API_TOKEN }}
-                    repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
-                    action: "upload"
-                    ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-                    # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-                    app_location: "/frontend" # App source code path
-                    api_location: "" # Api source code path - optional
-                    output_location: "dist" # Built app content directory - optional
-                    ###### End of Repository/Build Configurations ######
+                    args: stack deploy --compose-file ./docker/production/compose.yaml ${{ needs.variables.outputs.DOCKER_STACK_NAME }}

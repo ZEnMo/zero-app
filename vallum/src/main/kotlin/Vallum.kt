@@ -26,7 +26,8 @@ constructor(
     fun getHessenpoortSurveys(): List<Survey> =
         getSurveysByProject("Hessenpoort")
 
-    fun getSurveysByProject(project: String): List<Survey> {
+    @JvmOverloads
+    fun getSurveysByProject(project: String, includeInSimulation: Boolean? = true): List<Survey> {
         val client = HttpClient(CIO) {
             install(ContentNegotiation) {
                 json(Json {
@@ -39,6 +40,7 @@ constructor(
             val accessToken = getAccessToken(client)
             client.get(baseUrl.trimEnd('/') + "/company-surveys") {
                 parameter("project", project)
+                parameter("includeInSimulation", includeInSimulation)
                 headers {
                     append("Authorization", "Bearer $accessToken")
                 }

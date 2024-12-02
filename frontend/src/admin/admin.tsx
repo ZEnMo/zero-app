@@ -13,12 +13,11 @@ import {JsonButton} from "./json-button";
 import {DeeplinkButton} from "./deeplink-button"
 import {ZeroLayout} from "../components/zero-layout"
 
-import {ImportExcelButton} from "./import-excel-button"
-import {NewSurveyButton} from "./new-survey-button"
 import {AdminButtonRow} from "./admin-button-row"
+import {SurveyIncludeInSimulationCheckbox} from "./survey-include-in-simulation-checkbox"
 
 export const Admin: FunctionComponent = () => {
-    const {loading, surveys, removeSurvey} = useSurveys()
+    const {loading, surveys, changeSurvey, removeSurvey} = useSurveys()
 
     const multipleProjects = surveys.map(survey => survey.zenmoProject)
         .filter((value, index, self) => self.indexOf(value) === index).length > 1
@@ -30,6 +29,7 @@ export const Admin: FunctionComponent = () => {
                     <AdminButtonRow/>
                 </div>
                     <DataTable
+                        key={String(multipleProjects)}
                         value={surveys}
                         loading={loading}
                         sortField="created"
@@ -53,7 +53,15 @@ export const Admin: FunctionComponent = () => {
                                 ))}
                             </>
                         )}/>
-                        <Column field="createdToString" body={survey => formatDatetime(survey.created.toString())} header="Opgestuurd op" sortable/>
+
+                        <Column field="createdAtToString" body={(survey: Survey ) => formatDatetime(survey.createdAt.toString())} header="Opgestuurd op" sortable/>
+                        <Column field="createdByToString" header="Aangemaakt door" sortable filter />
+                        <Column field="includeInSimulation" header="Opnemen in simulatie" sortable
+                                body={(survey: Survey) => <SurveyIncludeInSimulationCheckbox
+                                    includeInSimulation={survey.includeInSimulation}
+                                    surveyId={survey.id}
+                                    setIncludeInSimulation={(includeInSimulation) => changeSurvey(survey.withIncludeInSimulation(includeInSimulation))}
+                                />}/>
                         <Column body={(survey: Survey) => (
                             <div css={{
                                 display: 'flex',

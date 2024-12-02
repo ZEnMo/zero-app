@@ -16,7 +16,7 @@ class ElectricityTest {
             )
         )
 
-        assertEquals(electricity.getContractedConnectionCapacityKw(), 3 * 80)
+        assertEquals(electricity.getContractedConnectionCapacityKw(), 3 * 80.0 * 230.0 * 0.001)
     }
 
     @Test
@@ -27,6 +27,6 @@ class ElectricityTest {
             )
         )
 
-        assertEquals(electricity.getContractedConnectionCapacityKw(), 400)
+        assertEquals(electricity.getContractedConnectionCapacityKw(), 400.0)
     }
 }

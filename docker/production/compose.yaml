@@ -23,7 +23,7 @@ services:
         image: ghcr.io/zenmo/ztor:${TAG}
         environment:
             POSTGRES_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-#            POSTGRES_URL: jdbc:postgresql://postgres.zenmo.com:5432/${DB_NAME}
+            # POSTGRES_URL: jdbc:postgresql://postgres.zenmo.com:5432/${DB_NAME}
             POSTGRES_USER: ${DB_NAME}
             POSTGRES_PASSWORD: ${DB_PASSWORD}
             AZURE_STORAGE_ACCOUNT_NAME: zerostore
