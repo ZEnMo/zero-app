@@ -5,18 +5,25 @@ import {
     RouterProvider,
 } from "react-router-dom";
 import './index.css'
-import {DE_WIEKEN, HESSENPOORT} from './components/company-survey-v2/project'
-import {Survey} from './components/company-survey-v2/survey'
+import {DE_WIEKEN, getProjectConfiguration, HESSENPOORT, ProjectName} from "./components/company-survey-v2/project"
+import {Survey, SurveyFromProject} from "./components/company-survey-v2/survey"
 import {ThankYou} from './components/thank-you'
 import reportWebVitals from './reportWebVitals'
 import App from "./App";
 import {LoginWidget} from "./user/login";
 import {BedrijvenFormV1} from "./components/bedrijven-form-v1";
 import {Admin} from "./admin/admin";
-import {SurveyById, SurveyByIdRouteData} from "./components/company-survey-v2/survey-by-id";
+import {
+    fetchSurveyById,
+    SurveyById,
+    SurveyByIdLoaderData,
+    SurveyByIdRouteData,
+} from "./components/company-survey-v2/survey-by-id"
 import {Home} from "./components/home"
 import {ExcelImport} from "./excel-import/excel-import"
 import {NewSurveyByProjectName} from "./components/company-survey-v2/new-survey-by-project-name"
+import {fetchBuurtcodesByProject} from "./panden-select/fetch-buurtcodes"
+import {assertDefined} from "./services/util"
 
 const router = createBrowserRouter([
     {
@@ -34,19 +41,24 @@ const router = createBrowserRouter([
     {
         path: "/new-survey/:projectName",
         element: <NewSurveyByProjectName />,
+        loader: async ({params: {projectName}, request}) => {
+            return getProjectConfiguration(assertDefined(projectName) as ProjectName)
+        }
     },
     {
         path: "/bedrijven-hessenpoort",
-        element: <Survey project={HESSENPOORT} />,
+        element: <SurveyFromProject />,
+        loader: async () => getProjectConfiguration(HESSENPOORT.name)
     },
     {
         path: "/bedrijven-de-wieken",
-        element: <Survey project={DE_WIEKEN} />,
+        element: <SurveyFromProject />,
+        loader: async () => getProjectConfiguration(DE_WIEKEN.name)
     },
     {
         path: "/bedrijven-uitvraag/:surveyId",
         element: <SurveyById />,
-        loader: ({params: {surveyId}, request}): SurveyByIdRouteData => {
+        loader: async ({params: {surveyId}, request}): Promise<SurveyByIdLoaderData> => {
             if (!surveyId) {
                 throw new Error("Survey ID is required")
             }
@@ -54,10 +66,17 @@ const router = createBrowserRouter([
             const deeplink = url.searchParams.get("deeplink");
             const secret = url.searchParams.get("secret");
 
-            return {
+            const survey = await fetchSurveyById({
                 surveyId,
                 deeplink,
                 secret,
+            })
+
+            const project = await getProjectConfiguration(survey.zenmoProject)
+
+            return {
+                survey,
+                project,
             }
         }
     },

@@ -1,0 +1,33 @@
+
+# Compose file to run tests in GitHub Actions
+services:
+    gradle-base:
+        image: gradle:8.10.0-jdk21
+        working_dir: /home/gradle/zero
+        user: gradle
+        volumes:
+            - .:/home/gradle/zero
+            - gradle-base-cache:/home/gradle/.gradle
+        entrypoint: gradle --project-cache-dir=/tmp/gradle
+
+    zorm-test-github-actions:
+        extends:
+            service: gradle-base
+        depends_on:
+            - postgres-github-actions
+        volumes:
+            - gradle-zorm-test-home:/home/gradle/.gradle
+        command: zorm:test --no-daemon
+        environment:
+            POSTGRES_URL: jdbc:postgresql://postgres-github-actions:5432/postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: github-actions
+
+    postgres-github-actions:
+        image: postgres:17.2
+        environment:
+            POSTGRES_PASSWORD: github-actions
+
+volumes:
+    gradle-base-cache:
+    gradle-zorm-test-home:

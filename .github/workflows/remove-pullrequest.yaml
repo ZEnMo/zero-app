@@ -1,4 +1,4 @@
-name: Remove test services
+name: Remove pullrequest environment
 
 on:
     pull_request:

@@ -1,9 +1,11 @@
 import {FunctionComponent} from "react"
 import {Survey} from "./survey"
-import { useParams } from "react-router-dom"
-import {castProjectName, getProjectConfiguration} from "./project"
+import {useLoaderData, useParams} from "react-router-dom"
+import {castProjectName, getProjectConfiguration, ProjectConfiguration} from "./project"
 import {assertDefined} from "../../services/util"
 
-export const NewSurveyByProjectName: FunctionComponent<{}> = () => (
-    <Survey project={getProjectConfiguration(castProjectName(assertDefined(useParams().projectName)))} />
-)
+export const NewSurveyByProjectName: FunctionComponent<{}> = () => {
+    const project = useLoaderData() as ProjectConfiguration
+
+    return <Survey project={project} />
+}

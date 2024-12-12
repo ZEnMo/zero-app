@@ -8,7 +8,7 @@ import {PandenSelect} from "./panden-select"
 import {Nullable} from "primereact/ts-helpers"
 import {PandID} from "zero-zummon"
 
-const fetchBuurtenAndPanden = async (buurtCodes: string[]) => {
+const fetchBuurtenAndPanden = async (buurtCodes: readonly string[]) => {
     const buurten = await fetchBuurtenByCodes(buurtCodes)
 
     const panden = await fetchBag2dPanden(geometryToBoundingBox(buurten))
@@ -20,20 +20,17 @@ const fetchBuurtenAndPanden = async (buurtCodes: string[]) => {
 }
 
 export const PandenSelectLoader: FunctionComponent<{
-    project: Nullable<Project>,
+    buurtcodes: readonly string[],
     thisCompanyPandIds: ReadonlySet<PandID>,
     addThisCompanyPandId: (pandId: PandID) => void,
     removeThisCompanyPandId: (pandId: PandID) => void,
-}> = ({project, thisCompanyPandIds, addThisCompanyPandId, removeThisCompanyPandId}) => {
-    if (!project) {
+}> = ({buurtcodes, thisCompanyPandIds, addThisCompanyPandId, removeThisCompanyPandId}) => {
+    if (!buurtcodes) {
         return <p>Geen project gevonden</p>
     }
-
-    const buurtCodes = [...project.buurtCodes.asJsReadonlyArrayView()]
-
     const [result, error, pending] = usePromise(
-        async () => fetchBuurtenAndPanden(buurtCodes),
-        buurtCodes, // TODO: deps not working properly, keeps re-fetching
+        async () => fetchBuurtenAndPanden(buurtcodes),
+        buurtcodes,
     )
 
     if (error) {

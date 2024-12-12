@@ -21,6 +21,7 @@ import java.util.*
 fun Application.configureDatabases(): Database {
     val db: Database = connectToPostgres()
     val surveyRepository = SurveyRepository(db)
+    val projectRepository = ProjectRepository(db)
     val deeplinkService = DeeplinkService(DeeplinkRepository(db))
 
     routing {
@@ -31,7 +32,12 @@ fun Application.configureDatabases(): Database {
                 return@get
             }
 
-            call.respond(HttpStatusCode.OK, ProjectRepository(db).getProjects(userId))
+            call.respond(HttpStatusCode.OK, projectRepository.getProjectsByUserId(userId))
+        }
+
+        get("/projects/by-name/{projectName}/buurtcodes") {
+            val projectName = call.parameters["projectName"]!!
+            call.respond(HttpStatusCode.OK, projectRepository.getBuurtCodesByProjectName(projectName))
         }
 
         // Create

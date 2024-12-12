@@ -1,0 +1,59 @@
+<h1>Kwartierwaarden invullen</h1>
+
+<p>Richtlijnen</p>
+
+<ul>
+    <li>Geef waarden op over een periode van minimaal een jaar.</li>
+    <li>De eerste waarde moet liggen op of voor 1 januari 2023 om 00:15 CET.</li>
+    <li>De laatste waarde moeten liggen op of na 1 januari 2024 om 00:00.</li>
+</ul>
+
+<p>Wijk hier alleen van af als het echt niet anders kan</p>
+
+<label style="display: block">
+    Datum en tijd begin kwartierwaarden:
+    <input type="datetime-local" id="start" name="start"/>
+</label>
+
+<p>Plak hier de waarden in kWh.</p>
+
+<textarea id="values" name="values" style="display: block; height: 10rem">2,9
+2,4
+2,1
+1,9
+3,4
+0,5
+0,6
+</textarea>
+
+<p id="error" style="color: red"></p>
+<p>Eind kwartierwaarden: <span id="end"></span></p>
+<p>Totaal: <span id="total"></span> kWh</p>
+
+<script src="https://momentjs.com/downloads/moment-with-locales.min.js"></script>
+<script>
+    moment.locale('nl')
+    document.getElementById("start").addEventListener("input", calc)
+    document.getElementById("values").addEventListener("input", calc)
+
+    function calc() {
+        const content = document.getElementById("values").value
+        const date = document.getElementById("start").value
+
+        if (!date || !content) {
+            return
+        }
+
+        const lines = content.split("\n")
+        const trimmedLines = lines.map(line => line.trim().replace(",", ".")).filter(line => line)
+        const total = trimmedLines.reduce((acc, v) => acc + parseFloat(v), 0)
+        document.getElementById("total").innerText = total.toLocaleString("nl")
+
+        const start = document.getElementById("start").value
+        const parsed = moment(start)
+        const end = parsed.add(trimmedLines.length * 15, "minutes")
+        document.getElementById("end").innerText = end.format("LLL")
+    }
+</script>
+
+<button type="submit">Opsturen</button>

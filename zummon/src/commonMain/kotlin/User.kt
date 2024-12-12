@@ -1,5 +1,6 @@
 package com.zenmo.zummon
 
+import com.zenmo.zummon.companysurvey.Project
 import kotlinx.serialization.Serializable
 import kotlin.js.JsExport
 import kotlin.uuid.Uuid
@@ -12,6 +13,7 @@ import kotlin.uuid.Uuid
 @JsExport
 data class User(
     @Serializable(with = KotlinUuidSerializer::class)
-    val id: Uuid,
+    val id: Uuid = Uuid.random(),
     val note: String,
+    val projects: List<Project> = emptyList()
 )

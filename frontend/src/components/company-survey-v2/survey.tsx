@@ -3,7 +3,7 @@ import {Alert} from 'antd'
 import {cloneDeep} from 'lodash'
 import {FunctionComponent, useEffect, useState} from 'react'
 import {useForm, UseFormReturn} from 'react-hook-form'
-import {useNavigate} from 'react-router-dom'
+import {useLoaderData, useNavigate} from "react-router-dom"
 import {Address} from './address'
 import {BasicData} from './basic-data'
 import {defineFlash} from './flash'
@@ -15,6 +15,12 @@ import {ProjectConfiguration} from './project'
 import {SurveyTabs} from './survey-tabs'
 import {surveyFromJson} from 'zero-zummon'
 import {useOnce} from "../../hooks/use-once"
+
+export const SurveyFromProject: FunctionComponent<{}> = () => {
+    const project = useLoaderData() as ProjectConfiguration
+
+    return <Survey project={project} />
+}
 
 export const Survey: FunctionComponent<{project: ProjectConfiguration, survey?: any}> = ({project, survey}) => {
     const [key, setKey] = useState(1)

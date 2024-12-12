@@ -25,11 +25,6 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-kotlin-datetime:$exposed_version")
-    // We are using Kotlin datetimes because they support serialization out-of-the-box.
-    // If convenient for AnyLogic we can switch to Java datetimes.
-//    implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
-
-    implementation("com.benasher44:uuid:0.8.4")
 
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.20")
 }

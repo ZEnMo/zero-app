@@ -1,0 +1,55 @@
+name: Run automated tests
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - main
+            - production
+    pull_request:
+        types: [ opened, synchronize, reopened ]
+
+jobs:
+    # Tests with a database
+    zorm:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+            -   name: Cache Docker images
+                uses: ScribeMD/docker-cache@0.5.0
+                with:
+                    key: docker-cache
+            -   run: >
+                    docker compose 
+                    --project-directory .
+                    --file github-actions/compose.yaml
+                    run  --rm  --user root 
+                    zorm-test-github-actions
+
+    # Tests without a database
+    gradle:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+            -   uses: actions/setup-java@v4
+                with:
+                    distribution: temurin
+                    java-version: 21
+            -   name: Setup Gradle
+                uses: gradle/actions/setup-gradle@v3
+            -   run: gradle excel-read-named:test
+            -   run: gradle zummon:jvmTest
+
+    frontend:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v4
+            -   uses: actions/setup-node@v4
+                with:
+                    node-version: 22
+                    cache: npm
+                    cache-dependency-path: ./frontend/package-lock.json
+            -   run: npm install
+                working-directory: ./frontend
+            -   run: npm run test
+                working-directory: ./frontend

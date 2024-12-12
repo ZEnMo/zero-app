@@ -34,23 +34,29 @@ data class Electricity (
     fun getHasConnection(): Boolean {
         return hasConnection ?: false
     }
-    
+
+    /**
+     * Contracted capacity for delivery of electricity from grid to company.
+     */
     fun getContractedConnectionCapacityKw(): Double? {
-        when(kleinverbruikOrGrootverbruik) {
-            KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> return grootverbruik?.contractedConnectionDeliveryCapacity_kW?.toDouble()
-            KleinverbruikOrGrootverbruik.KLEINVERBRUIK -> return kleinverbruik?.connectionCapacity?.toKw()
-            else -> return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.contractedConnectionDeliveryCapacity_kW?.toDouble()
+        return when (kleinverbruikOrGrootverbruik) {
+            KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> grootverbruik?.contractedConnectionDeliveryCapacity_kW?.toDouble()
+            KleinverbruikOrGrootverbruik.KLEINVERBRUIK -> kleinverbruik?.connectionCapacity?.toKw()
+            else -> kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.contractedConnectionDeliveryCapacity_kW?.toDouble()
         }
     }
 
     fun getPhysicalConnectionCapacityKw(): Double? {
-        when(kleinverbruikOrGrootverbruik) {
-            KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> return grootverbruik?.physicalCapacityKw?.toDouble()
-            KleinverbruikOrGrootverbruik.KLEINVERBRUIK -> return kleinverbruik?.connectionCapacity?.toKw()
-            else -> return kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.physicalCapacityKw?.toDouble()
+        return when (kleinverbruikOrGrootverbruik) {
+            KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> grootverbruik?.physicalCapacityKw?.toDouble()
+            KleinverbruikOrGrootverbruik.KLEINVERBRUIK -> kleinverbruik?.connectionCapacity?.toKw()
+            else -> kleinverbruik?.connectionCapacity?.toKw() ?: grootverbruik?.physicalCapacityKw?.toDouble()
         }
     }
 
+    /**
+     * Contracted capacity for feed-in of electricity from company to grid.
+     */
     fun getContractedFeedInCapacityKw(): Double? {
         when (kleinverbruikOrGrootverbruik) {
             KleinverbruikOrGrootverbruik.GROOTVERBRUIK -> return grootverbruik?.contractedConnectionFeedInCapacity_kW?.toDouble()

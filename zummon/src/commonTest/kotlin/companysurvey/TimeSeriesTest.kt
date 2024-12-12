@@ -112,4 +112,17 @@ class TimeSeriesTest {
         assertEquals(300f, yearValues.first())
         assertEquals(200f, yearValues.last())
     }
+
+    @Test
+    fun testGetPeakKw() {
+        val timeSeries = TimeSeries(
+            type = TimeSeriesType.ELECTRICITY_DELIVERY,
+            start = Instant.parse("2024-01-01T00:00:00+01:00"),
+            values = floatArrayOf(1f, 2f, 1f)
+        )
+
+        val peak = timeSeries.getPeak()
+        assertEquals(2.0, peak.kWh())
+        assertEquals(8.0, peak.kW())
+    }
 }

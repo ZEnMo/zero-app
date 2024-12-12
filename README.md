@@ -23,6 +23,9 @@ Works together with:
 Components
 ----------
 
+![](docs/zero-web-components.jpg)
+(created using draw.io)
+
 ### [Frontend](frontend)
 
 Graphical user interface. The company survey forms are here ([try one here!](https://zero-test.zenmo.com/bedrijven-hessenpoort)) and its web interface for administrators ([screenshot](docs/admin-screenshot.jpg)). 
@@ -38,13 +41,20 @@ Like AnyLogic it leans on the Java ecosystem.
 
 ### [Vallum](vallum)
 
-Client for Ztor. This is a library to access the REST API from AnyLogic.
+Client for Ztor. This is a library to access the REST API from the 
+AnyLogic business park model.
 Artifacts are published to [GitHub packages](https://github.com/Zenmo/zero/packages/2239630)
 
 ### [Zummon](zummon)
 
 Contains code to share between the front-end and other components. 
 Builds to both an NPM package and JVM artifact. 
+
+This is a class diagram of data transfer objects in Zummon which are 
+relevant for Vallum (=AnyLogic):
+
+![](docs/zummon-class-diagram.png)
+(generated using Intellij)
 
 ### [Zorm](zorm)
 
@@ -59,17 +69,12 @@ This contains:
 * mapping to Java data transfer objects
 * create, read, update and delete methods
 
-#### Data transfer objects class diagram:
-
-![](docs/dto-class-diagram.png)
-(generated using Intellij)
-
-#### Database relations:
+Diagram of the relations: 
 
 ![](docs/erd.png)
 (generated using Intellij)
 
-#### Planned database relations:
+Planned database relations:
 ![](docs/erd-future.jpg)
 (created using draw.io)
 

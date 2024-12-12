@@ -7,6 +7,7 @@ import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.util.AreaReference
 import org.apache.poi.ss.util.CellReference
 import org.apache.poi.xssf.usermodel.XSSFCell
+import org.apache.poi.xssf.usermodel.XSSFSheet
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.util.*
 import kotlin.time.Duration.Companion.hours
@@ -47,6 +48,7 @@ data class CompanyDataDocument(
                 zenmoProject = project.name ?: "Energieke Regio project ${project.energiekeRegioId}",
                 personName = "Contactpersoon",
                 project = project,
+                includeInSimulation = readCompletenessField(),
                 addresses = listOf(
                     Address(
                         id = UUID.randomUUID(),
@@ -296,6 +298,32 @@ data class CompanyDataDocument(
             cell.stringCellValue
         } catch (e: IllegalStateException) {
             return cell.numericCellValue.toString()
+        }
+    }
+
+    private val controleSheetName = "Controle"
+
+    fun getControleSheet(): XSSFSheet {
+        return workbook.getSheet(controleSheetName) ?: throw Exception("""Sheet "$controleSheetName" not found""")
+    }
+
+    /**
+     * Check field A1 which indicates completeness.
+     * TODO: make this a named field
+     */
+    fun readCompletenessField(): Boolean {
+        val stringValue = getControleSheet()
+            .getRow(0)
+            .getCell(0)
+            .stringCellValue
+
+        val falseMatch = "QuickScan niet mogelijk"
+        val trueMatch = "QuickScan mogelijk"
+
+        return when (stringValue) {
+            falseMatch -> false
+            trueMatch -> true
+            else -> throw Exception("""Found "$stringValue" in field $controleSheetName.A1, expected "$falseMatch" or "$trueMatch"""")
         }
     }
 

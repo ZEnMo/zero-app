@@ -3,6 +3,7 @@ package com.zenmo.zummon.companysurvey
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import com.zenmo.zummon.BenasherUuidSerializer
@@ -76,6 +77,7 @@ data class TimeSeries (
         return maxNullSequence
     }
 
+    fun getPeak(): DataPoint = DataPoint(values.max(), unit, timeStep)
 
     /**
      * Get a full calendar year of data if it is present.
@@ -165,4 +167,30 @@ enum class TimeSeriesType {
     // Solar panel production
     ELECTRICITY_PRODUCTION,
     GAS_DELIVERY,
+}
+
+/**
+ * Represents a single point within the time series.
+ * Improvement: add timestamp
+ */
+data class DataPoint (
+    val value: Float,
+    val unit: TimeSeriesUnit,
+    val timeStep: kotlin.time.Duration,
+) {
+    fun kWh(): Double {
+        if (this.unit != TimeSeriesUnit.KWH) {
+            throw UnsupportedOperationException("Can only get the kWh from a kWh data point")
+        }
+
+        return value.toDouble()
+    }
+
+    fun kW(): Double {
+        if (this.unit != TimeSeriesUnit.KWH) {
+            throw UnsupportedOperationException("Can only get the kW from a kWh data point")
+        }
+
+        return value * (1.hours / this.timeStep)
+    }
 }

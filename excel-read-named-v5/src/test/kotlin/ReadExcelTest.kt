@@ -14,6 +14,8 @@ class ReadExcelTest {
         val companyDocumented = CompanyDataDocument.fromResource("Dealnr.bedrijfsnaam.data_aanpassingenZenmo27aug_filled_out.xlsx")
         val survey = companyDocumented.getSurveyObject()
 
+        assertEquals(false, survey.includeInSimulation)
+
         val deliveryTimeSeries = survey.getSingleGridConnection().electricity.quarterHourlyDelivery_kWh
         assertNotNull(deliveryTimeSeries)
 

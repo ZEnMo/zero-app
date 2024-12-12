@@ -1,47 +1,35 @@
 package com.zenmo.orm.companysurvey
 
+import com.zenmo.orm.cleanDb
 import com.zenmo.orm.companysurvey.table.CompanySurveyTable
-import com.zenmo.orm.createSchema
 import com.zenmo.orm.connectToPostgres
-import com.zenmo.orm.user.saveUser
+import com.zenmo.orm.user.UserRepository
 import com.zenmo.zummon.companysurvey.Survey
-import org.jetbrains.exposed.sql.Schema
-import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.junit.BeforeClass
 import java.util.UUID
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
-class RepositoryTest {
-    companion object {
-        /**
-         * Drop and create database before running tests.
-         */
-        @JvmStatic
-        @BeforeClass
-        fun setupClass() {
-            val db = connectToPostgres()
-            val schema = Schema(db.connector().schema)
-            transaction(db) {
-                SchemaUtils.dropSchema(schema, cascade = true)
-                SchemaUtils.createSchema(schema)
-            }
+class SurveyRepositoryTest {
+    val db: Database = connectToPostgres()
+    val surveyRepository = SurveyRepository(db)
+    val projectRepository = ProjectRepository(db)
+    val userRepository = UserRepository(db)
 
-            createSchema(db)
-        }
+    @BeforeTest
+    fun cleanUp() {
+        cleanDb(db)
+        projectRepository.saveNewProject("Project")
     }
 
     @Test
     fun testSaveMinimalSurvey() {
-        val db = connectToPostgres()
-        val projectRepository = ProjectRepository(db)
         projectRepository.saveNewProject("Project2")
-        val repo = SurveyRepository(db)
         val survey = Survey(
             companyName = "Zenmo",
             zenmoProject = "Project2",
@@ -49,22 +37,20 @@ class RepositoryTest {
             email = "john@example.com",
             addresses = emptyList(),
         )
-        repo.save(survey)
-        val storedSurveys = repo.getSurveys(CompanySurveyTable.id eq survey.id)
+        surveyRepository.save(survey)
+        val storedSurveys = surveyRepository.getSurveys(CompanySurveyTable.id eq survey.id)
         assertEquals(1, storedSurveys.size)
         assertEquals(survey, storedSurveys.first())
     }
 
     @Test
     fun testSaveWithGridConnections() {
-        val db = connectToPostgres()
         val projectName = "WessenHoort"
-        ProjectRepository(db).saveNewProject(projectName)
-        val repo = SurveyRepository(db)
+        projectRepository.saveNewProject(projectName)
         val survey = createMockSurvey(projectName)
 
-        repo.save(survey)
-        val storedSurveys = repo.getSurveys(CompanySurveyTable.id eq survey.id)
+        surveyRepository.save(survey)
+        val storedSurveys = surveyRepository.getSurveys(CompanySurveyTable.id eq survey.id)
         assertEquals(1, storedSurveys.size)
         val storedSurvey = wipeSequence(storedSurveys.first())
 
@@ -76,26 +62,23 @@ class RepositoryTest {
 
     @Test
     fun testUserCantAccessSurveyInOtherProject() {
-        val db = connectToPostgres()
-
         val ownProjectName = "Middelkaap"
-        val projectId = ProjectRepository(db).saveNewProject(ownProjectName)
+        val projectId = projectRepository.saveNewProject(ownProjectName)
 
         val userId = UUID.randomUUID()
-        saveUser(db, userId, listOf(projectId))
+        userRepository.saveUser(userId, listOf(projectId))
 
         val otherProjectName = "Bovenkaap"
-        ProjectRepository(db).saveNewProject(otherProjectName)
+        projectRepository.saveNewProject(otherProjectName)
 
-        val repo = SurveyRepository(db)
-        repo.save(Survey(
+        surveyRepository.save(Survey(
             companyName = "Zenmo",
             zenmoProject = ownProjectName,
             personName = "John Doe",
             email = "john@example.com",
             addresses = emptyList(),
         ))
-        repo.save(Survey(
+        surveyRepository.save(Survey(
             companyName = "Zenmo",
             zenmoProject = otherProjectName,
             personName = "John Doe",
@@ -103,27 +86,21 @@ class RepositoryTest {
             addresses = emptyList(),
         ))
 
-        val surveys = repo.getSurveysByUser(userId)
+        val surveys = surveyRepository.getSurveysByUser(userId)
         assertEquals(1, surveys.size)
         assertEquals("Middelkaap", surveys[0].zenmoProject)
     }
 
     @Test
     fun testSequenceIsSameAfterUpsert() {
-        val db = connectToPostgres()
-
-        val projectRepository = ProjectRepository(db)
-        projectRepository.saveNewProject("Project")
-
-        val repo = SurveyRepository(db)
         val survey = createMockSurvey("Project")
-        repo.save(survey)
+        surveyRepository.save(survey)
 
-        val storedSurvey1 = repo.getSurveyById(survey.id)!!
+        val storedSurvey1 = surveyRepository.getSurveyById(survey.id)!!
 
-        repo.save(storedSurvey1)
+        surveyRepository.save(storedSurvey1)
 
-        val storedSurvey2 = repo.getSurveyById(storedSurvey1.id)!!
+        val storedSurvey2 = surveyRepository.getSurveyById(storedSurvey1.id)!!
 
         assertEquals(
             storedSurvey1.addresses.first().gridConnections.first().sequence,
@@ -135,24 +112,24 @@ class RepositoryTest {
     @OptIn(ExperimentalUuidApi::class)
     fun testCreatorIsSetOnCreateButNotOnEdit() {
         val db = connectToPostgres()
+
         val jaapId = UUID.fromString("bc0ea106-3bac-452e-ae39-5c1b29782001")
-        saveUser(db = db, userId = jaapId, note = "Jaap")
+        userRepository.saveUser(userId = jaapId, note = "Jaap")
         val pietId = UUID.fromString("bc0ea106-3bac-452e-ae39-5c1b29782002")
-        saveUser(db = db, userId = pietId, note = "Piet")
+        userRepository.saveUser(userId = pietId, note = "Piet")
 
-        val repo = SurveyRepository(db)
         // create survey
-        val surveyId = repo.save(createMockSurvey(), jaapId)
+        val surveyId = surveyRepository.save(createMockSurvey(), jaapId)
 
-        val surveyLoadedAfterCreate = repo.getSurveyById(surveyId)
+        val surveyLoadedAfterCreate = surveyRepository.getSurveyById(surveyId)
         val createdBy = surveyLoadedAfterCreate?.createdBy
         assertNotNull(createdBy)
         assertEquals("Jaap", createdBy.note)
         assertEquals(jaapId.toKotlinUuid(), createdBy.id)
 
         // edit survey
-        repo.save(surveyLoadedAfterCreate, pietId)
-        val surveyLoadedAfterEdit = repo.getSurveyById(surveyId)
+        surveyRepository.save(surveyLoadedAfterCreate, pietId)
+        val surveyLoadedAfterEdit = surveyRepository.getSurveyById(surveyId)
         val createdBy2 = surveyLoadedAfterEdit?.createdBy
         assertNotNull(createdBy2)
         assertEquals("Jaap", createdBy2.note)

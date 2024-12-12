@@ -1,63 +1,90 @@
 package com.zenmo.orm.companysurvey
 
-import com.zenmo.orm.companysurvey.table.ProjectTable
-import com.zenmo.orm.user.table.UserProjectTable
 import com.zenmo.zummon.companysurvey.Project
-import org.jetbrains.exposed.sql.Database
+import com.zenmo.orm.user.table.UserProjectTable
+import com.zenmo.orm.companysurvey.table.ProjectTable
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.anyFrom
-import org.jetbrains.exposed.sql.insertReturning
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.toKotlinUuid
 
 class ProjectRepository(
     val db: Database
 ) {
+    fun getProjects(filter: Op<Boolean> = Op.TRUE): List<Project> {
+        return transaction(db) {
+            ProjectTable
+                .selectAll()
+                .where{
+                    filter
+                }.mapNotNull {
+                    hydrateProject(it)
+                }
+        }
+    }
+
+    fun getProjectById(id: UUID): Project? {
+        return getProjects(
+            (ProjectTable.id eq id)
+        ).firstOrNull()
+    }
+
+    fun getProjectsByUserId(userId: UUID): List<Project> =
+        transaction(db) {
+             getProjects(
+                ( ProjectTable.id eq anyFrom(
+                    UserProjectTable.select(UserProjectTable.projectId)
+                        .where { UserProjectTable.userId eq userId }
+                ))
+            )
+        }
+
+    fun deleteProject(projectId: UUID): Boolean {
+        return transaction(db) {
+            ProjectTable.deleteWhere { ProjectTable.id eq projectId } > 0
+        }
+    }
+
+    fun save(project: Project): Project {
+        return transaction(db) {
+           ProjectTable.upsertReturning() {
+               it[id] = project.id
+               it[name] = project.name
+               it[energiekeRegioId] = project.energiekeRegioId
+               it[buurtCodes] = project.buurtCodes
+            }.map {
+               hydrateProject(it)
+            }.first()
+        }
+    }
+
     fun saveNewProject(name: String): UUID =
         transaction(db) {
-            ProjectTable.insertReturning(listOf(ProjectTable.id)) {
+           ProjectTable.insertReturning(listOf(ProjectTable.id)) {
                 it[ProjectTable.name] = name
             }.first()[ProjectTable.id]
         }
 
-    @OptIn(ExperimentalUuidApi::class)
     fun getProjectByEnergiekeRegioId(energiekeRegioId: Int): Project =
         transaction(db) {
-            ProjectTable.selectAll()
-                .where {
-                    ProjectTable.energiekeRegioId eq energiekeRegioId
-                }
-                .map {
-                    Project(
-                        it[ProjectTable.id].toKotlinUuid(),
-                        it[ProjectTable.name],
-                        it[ProjectTable.energiekeRegioId],
-                        it[ProjectTable.buurtCodes],
-                    )
-                }
-                .single()
+            getProjects(
+                ProjectTable.energiekeRegioId eq energiekeRegioId
+            )
+        }.first()
+
+    fun getBuurtCodesByProjectName(projectName: String): List<String> =
+        transaction(db) {
+            ProjectTable.select(ProjectTable.buurtCodes)
+                .where(ProjectTable.name eq projectName)
+                .single()[ProjectTable.buurtCodes]
         }
 
-    @OptIn(ExperimentalUuidApi::class)
-    fun getProjects(userId: UUID): List<Project> =
-        transaction(db) {
-            ProjectTable.selectAll()
-                .where {
-                    ProjectTable.id eq anyFrom(
-                        UserProjectTable.select(UserProjectTable.projectId)
-                            .where { UserProjectTable.userId eq userId }
-                    )
-                }
-                .map {
-                    Project(
-                        it[ProjectTable.id].toKotlinUuid(),
-                        it[ProjectTable.name],
-                        it[ProjectTable.energiekeRegioId],
-                        it[ProjectTable.buurtCodes],
-                    )
-                }
-        }
+    fun hydrateProject(row: ResultRow): Project {
+        return Project(
+            id = row[ProjectTable.id],
+            name = row[ProjectTable.name],
+            energiekeRegioId = row[ProjectTable.energiekeRegioId],
+            buurtCodes = row[ProjectTable.buurtCodes]
+        )
+    }
 }
