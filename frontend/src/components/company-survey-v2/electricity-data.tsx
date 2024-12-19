@@ -1,9 +1,10 @@
-import {useState} from 'react'
-import {UseFormReturn} from 'react-hook-form'
-import {ConsumptionSpec, ElectricityConsumptionRadios} from './electricity-consumption-radios'
-import {LabelRow} from './generic/label-row'
-import {Purpose, Upload} from './generic/upload'
-import {ProjectConfiguration} from './project'
+import {useState} from "react"
+import {UseFormReturn} from "react-hook-form"
+import {ConsumptionSpec, ElectricityConsumptionRadios} from "./electricity-consumption-radios"
+import {LabelRow} from "./generic/label-row"
+import {Purpose, Upload} from "./generic/upload"
+import {ProjectConfiguration} from "./project"
+import {TimeSeriesElectricity} from "./time-series/time-series-electricity"
 
 export const ElectricityData = ({form, prefix, project}: {
     form: UseFormReturn,
@@ -61,6 +62,9 @@ export const ElectricityData = ({form, prefix, project}: {
                         project={project.name}
                         purpose={Purpose.ELECTRICITY_AUTHORIZATION} />
                 </LabelRow>
+            )}
+            {consumptionSpec === ConsumptionSpec.TEXTAREA && (
+                <TimeSeriesElectricity form={form} prefix={prefix} />
             )}
             {/*{consumptionSpec === ConsumptionSpec.ANNUAL_VALUES && (*/}
             {/*    <>*/}

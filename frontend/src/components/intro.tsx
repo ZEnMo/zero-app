@@ -2,7 +2,7 @@ import {FunctionComponent} from "react"
 import {ZeroLayout} from "./zero-layout"
 import {Link} from "react-router-dom"
 
-export const Home: FunctionComponent = () => (
+export const Intro: FunctionComponent = () => (
     <ZeroLayout>
         <div style={{margin: "0 auto", maxWidth: "40rem"}}>
             <p>Welkom bij Zenmo Zero</p>

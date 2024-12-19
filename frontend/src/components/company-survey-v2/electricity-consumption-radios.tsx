@@ -4,6 +4,8 @@ import {ProjectConfiguration} from './project'
 export enum ConsumptionSpec {
     PLACEHOLDER_AUTHORIZATION = "PLACEHOLDER_AUTHORIZATION",
     PDF_AUTHORIZATION = "PDF_AUTHORIZATION",
+    TEXTAREA = "TEXTAREA",
+    // Option unused as we have not automated this proces
     UPLOAD_QUARTER_HOURLY_VALUES = "UPLOAD_QUARTER_HOURLY_VALUES",
     // Option removed as per feedback
     // ANNUAL_VALUES = "ANNUAL_VALUES",
@@ -12,6 +14,7 @@ export enum ConsumptionSpec {
 const labels = {
     [ConsumptionSpec.PLACEHOLDER_AUTHORIZATION]: "Ik wil jullie machtigen voor het ophalen van de meetdata",
     [ConsumptionSpec.PDF_AUTHORIZATION]: "Ik wil jullie machtigen voor het ophalen van de meetdata",
+    [ConsumptionSpec.TEXTAREA]: "Kwartierwaarden plakken",
     [ConsumptionSpec.UPLOAD_QUARTER_HOURLY_VALUES]: "Kwartierwaarden uploaden",
     // [ConsumptionSpec.ANNUAL_VALUES]: "Jaarverbruik invullen",
 }
@@ -32,8 +35,8 @@ export const ElectricityConsumptionRadios = ({onChange, consumptionSpec, project
                     Ik wil jullie machtigen voor het ophalen van de meetdata
                 </Radio>
             }
-            <Radio value={ConsumptionSpec.UPLOAD_QUARTER_HOURLY_VALUES}>
-                Kwartierwaarden uploaden
+            <Radio value={ConsumptionSpec.TEXTAREA}>
+                Ik wil kwartierwaarden kopiëren en plakken
             </Radio>
         </Radio.Group>
     )

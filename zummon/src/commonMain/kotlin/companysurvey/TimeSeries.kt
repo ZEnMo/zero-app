@@ -1,6 +1,7 @@
 package com.zenmo.zummon.companysurvey
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -10,8 +11,9 @@ import com.zenmo.zummon.BenasherUuidSerializer
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.encodeToString
 import kotlin.js.JsExport
-
+import kotlin.time.Duration
 
 /**
  * This contains values parsed from a CSV/excel or fetched from an API.
@@ -22,16 +24,25 @@ data class TimeSeries (
     @Serializable(with = BenasherUuidSerializer::class)
     val id: Uuid = uuid4(),
     val type: TimeSeriesType,
-    // Measurement start time
+    /** Start of the first measurement interval */
     val start: Instant,
-    val timeStep: kotlin.time.Duration = 15.minutes,
-    val unit: TimeSeriesUnit = TimeSeriesUnit.KWH,
+    /** Duration of the measurement interval */
+    val timeStep: Duration = type.defaultStep(),
+    val unit: TimeSeriesUnit = type.defaultUnit(),
     val values: FloatArray = floatArrayOf(),
 ) {
     @Deprecated("Use .values", ReplaceWith("values"))
     fun getFlatDataPoints(): FloatArray = values
 
     fun calculateEnd(): Instant = start + (timeStep * values.size)
+
+    fun sum(): Float = values.sum()
+
+    fun isValid() = !isEmpty() && !sum().isNaN()
+
+    fun withStartEpochSeconds(epochSeconds: Double) = copy(
+        start = Instant.fromEpochSeconds(epochSeconds.toLong())
+    )
 
     /**
      * The number of values needed to fill a year using the specified time step.
@@ -46,6 +57,10 @@ data class TimeSeries (
             throw Exception("Not enough values for year: needed $numValuesNeededForFullYear got ${values.size}")
         }
     }
+
+    fun withValues(values: FloatArray) = copy(values = values)
+
+    fun isEmpty() = values.isEmpty()
 
     fun hasFullYear(year: Int? = null): Boolean {
         return try {
@@ -150,7 +165,12 @@ data class TimeSeries (
         result = 31 * result + values.contentHashCode()
         return result
     }
+
+    fun toJson(): String = Json.encodeToString(this)
 }
+
+@JsExport
+fun timeSeriesFromJson(json: String): TimeSeries = Json.decodeFromString(TimeSeries.serializer(), json)
 
 @JsExport
 enum class TimeSeriesUnit {
@@ -161,13 +181,35 @@ enum class TimeSeriesUnit {
 @JsExport
 enum class TimeSeriesType {
     // Delivery from grid to end-user
-    ELECTRICITY_DELIVERY,
+    ELECTRICITY_DELIVERY {
+        override fun defaultUnit() = TimeSeriesUnit.KWH
+        override fun defaultStep() = 15.minutes
+    },
     // Feed-in of end-user back in to the rid
-    ELECTRICITY_FEED_IN,
+    ELECTRICITY_FEED_IN {
+        override fun defaultUnit() = TimeSeriesUnit.KWH
+        override fun defaultStep() = 15.minutes
+    },
     // Solar panel production
-    ELECTRICITY_PRODUCTION,
-    GAS_DELIVERY,
+    ELECTRICITY_PRODUCTION {
+        override fun defaultUnit() = TimeSeriesUnit.KWH
+        override fun defaultStep() = 15.minutes
+    },
+    GAS_DELIVERY {
+        override fun defaultUnit() = TimeSeriesUnit.M3
+        override fun defaultStep() = 1.hours
+    };
+
+    abstract fun defaultUnit(): TimeSeriesUnit
+    abstract fun defaultStep(): Duration
 }
+
+@JsExport
+fun createEmptyTimeSeriesForYear(type: TimeSeriesType, year: Int) =
+    TimeSeries(
+        type = type,
+        start = Instant.parse("$year-01-01T00:00:00+01:00")
+    )
 
 /**
  * Represents a single point within the time series.
@@ -194,3 +236,6 @@ data class DataPoint (
         return value * (1.hours / this.timeStep)
     }
 }
+
+@JsExport
+fun instantToEpochSeconds(instant: Instant) = instant.epochSeconds.toDouble()

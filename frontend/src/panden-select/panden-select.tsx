@@ -3,7 +3,7 @@ import {BuurtFeatureCollection, getBuurtCenter} from "../services/wijkenbuurten/
 import {Bag2DPand} from "../services/bag2d"
 import {GeoJSON, MapContainer, TileLayer} from "react-leaflet"
 import {featureCollection} from "@turf/helpers"
-import {geoJsonPositionToLeaflet} from "../services/geometry"
+import {geoJsonPositionToLeaflet, geometryToBoundingBox} from "../services/geometry"
 import center from "@turf/center"
 import {LeafletMouseEventHandlerFn} from "leaflet"
 import {PandID} from "zero-zummon"
@@ -52,7 +52,7 @@ export const PandenSelect: FunctionComponent<{
     return (
         <MapContainer
             center={buurtCenter}
-            zoom={15}
+            bounds={geometryToBoundingBox(buurten)}
             scrollWheelZoom={true}
             style={{
                 minHeight: "30rem",

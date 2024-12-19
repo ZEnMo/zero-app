@@ -36,13 +36,20 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${libs.versions.kotlinx.serialization.json.get()}")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${libs.versions.kotlinx.serialization.json.get()}")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
                 implementation("com.benasher44:uuid:0.8.4")
             }
         }
         commonTest {
             dependencies {
                 implementation(kotlin("test"))
+            }
+        }
+        jsMain {
+            dependencies {
+                // align versions with frontend
+                implementation(npm("@js-joda/core", "^5.6.3"))
+                implementation(npm("@js-joda/timezone", "^2.21.1"))
             }
         }
     }

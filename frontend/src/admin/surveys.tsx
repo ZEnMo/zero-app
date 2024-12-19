@@ -16,7 +16,7 @@ import {ZeroLayout} from "../components/zero-layout"
 import {AdminButtonRow} from "./admin-button-row"
 import {SurveyIncludeInSimulationCheckbox} from "./survey-include-in-simulation-checkbox"
 
-export const Admin: FunctionComponent = () => {
+export const Surveys: FunctionComponent = () => {
     const {loading, surveys, changeSurvey, removeSurvey} = useSurveys()
 
     const multipleProjects = surveys.map(survey => survey.zenmoProject)

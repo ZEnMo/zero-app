@@ -17,7 +17,7 @@ type UsePromiseReturn<T> = [
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
 export function usePromise<T>(promiseFn: () => Promise<T>, deps?: readonly any[]): UsePromiseReturn<T> {
-    const [result, error, state] = useLibPromise(promiseFn(), deps as Writeable<any[]>)
+    const [result, error, state] = useLibPromise(promiseFn, deps as Writeable<any[]>)
 
     // @ts-ignore
     return [

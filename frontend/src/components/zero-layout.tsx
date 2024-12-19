@@ -30,3 +30,4 @@ export const ZeroLayout: FunctionComponent<PropsWithChildren & {
         {children}
     </div>
 )
+

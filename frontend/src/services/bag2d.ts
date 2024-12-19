@@ -62,17 +62,18 @@ export async function fetchBag2dPanden(boundingBox: LatLngBounds, startIndex = 0
 
     const json = await response.json() as ResponseBody
 
-    // Recursively fetch the next page.
-    //
     // There seems no consistent indication of whether there are more results.
-    // We assume this is the last page if there are less than 900 results.
+    // We assume this is the last page if there are less results than below.
+    const paginationThreshold = 800
+
+    // Recursively fetch the next page.
     //
     // There is sometimes overlap between the last items of the previous page
     // and the first items of the next page.
     // We remove these duplicates by using a Map.
     return json.features.reduce((map, feature) => {
         return map.set(BigInt(feature.properties.identificatie), feature)
-    }, json.features.length > 900 ? await fetchBag2dPanden(boundingBox, startIndex + json.features.length) : new Map<BigInt, Bag2DPand>())
+    }, json.features.length > paginationThreshold ? await fetchBag2dPanden(boundingBox, startIndex + json.features.length) : new Map<BigInt, Bag2DPand>())
 }
 
 // definitie van de Nederlandse coördinatenstelsel

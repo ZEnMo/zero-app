@@ -206,10 +206,11 @@ services:
                 }
 
     npm:
-        image: node:22
+        image: node:23
         working_dir: /app/frontend
         volumes:
             - .:/app
+            - npm-cache:/root/.npm
         entrypoint: npm
         environment:
             VITE_ZTOR_URL: http://localhost:8082
@@ -255,4 +256,5 @@ volumes:
     gradle-test-cache:
     gradle-run-cache:
     gradle-cmd-cache:
+    npm-cache:
     postgres:

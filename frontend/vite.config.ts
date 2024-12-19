@@ -8,7 +8,9 @@ export default defineConfig({
         port: 3000,
     },
     build: {
+        minify: false,
         rollupOptions: {
+            treeshake: false,
             output: {
                 entryFileNames: "[name].js",
                 assetFileNames: '[name].css',
