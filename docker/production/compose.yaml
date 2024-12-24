@@ -9,10 +9,6 @@ services:
         labels:
             caddy: ${FRONTEND_HOSTNAME}
             caddy.reverse_proxy: "{{upstreams 2015}}"
-            # This certificate only works for the pullrequest domain.
-            # It should fall back to Let's Encrypt for the main domain.
-            # Except it doesn't.
-            #caddy.tls: /static_certs/wildcard.zero.zenmo.com/fullchain.pem /static_certs/wildcard.zero.zenmo.com/privkey.pem
         deploy:
             resources:
                 limits:
@@ -39,7 +35,6 @@ services:
         labels:
             caddy: ${ZTOR_HOSTNAME}
             caddy.reverse_proxy: "{{upstreams 8082}}"
-            caddy.tls: /static_certs/wildcard.zero.zenmo.com/fullchain.pem /static_certs/wildcard.zero.zenmo.com/privkey.pem
         deploy:
             resources:
                 limits:
