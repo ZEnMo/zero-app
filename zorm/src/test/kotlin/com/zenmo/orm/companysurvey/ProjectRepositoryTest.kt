@@ -72,6 +72,28 @@ class ProjectRepositoryTest {
     }
 
     @Test
+    fun testSaveNewProjectToUser() {
+        val userId = UUID.randomUUID()
+        userRepository.saveUser(userId)
+
+        val projectName = "User's Project 1"
+
+        val project = Project(
+            name = projectName,
+            energiekeRegioId = 123,
+        )
+
+        val newProject = projectRepository.save(project)
+        projectRepository.saveToUser(newProject, userId)
+
+        transaction(db) {
+            val projects = projectRepository.getProjectsByUserId(userId)
+            assertEquals(1, projects.size)
+            assertTrue(projects.any { it.name == projectName })
+        }
+    }
+
+    @Test
     fun testGetProjectByEnergiekeRegioId() {
         val project = Project(
             name = "Test Project",

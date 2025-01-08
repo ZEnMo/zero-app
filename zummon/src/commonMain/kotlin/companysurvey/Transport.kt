@@ -14,6 +14,7 @@ data class Transport (
     val trucks: Trucks = Trucks(),
     val vans: Vans = Vans(),
     val cars: Cars = Cars(),
+    val agriculture: Agriculture = Agriculture(),
     val otherVehicles: OtherVehicles = OtherVehicles(),
 )
 
@@ -64,4 +65,10 @@ data class OtherVehicles (
     val hasOtherVehicles: Boolean? = null,
     // which vehicles, usage patterns, how many, electrification.
     val description: String = "",
+)
+
+@Serializable
+data class Agriculture (
+    val numTractors: Int? = null,
+    val annualDieselUsage_L: Double? = null,
 )

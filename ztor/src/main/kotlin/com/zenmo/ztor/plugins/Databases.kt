@@ -4,10 +4,12 @@ import com.zenmo.orm.companysurvey.ProjectRepository
 import com.zenmo.orm.companysurvey.SurveyRepository
 import com.zenmo.orm.connectToPostgres
 import com.zenmo.orm.deeplink.DeeplinkRepository
+import com.zenmo.orm.user.UserRepository
 import com.zenmo.ztor.deeplink.DeeplinkService
 import com.zenmo.ztor.errorMessageToJson
 import com.zenmo.ztor.user.getUserId
 import com.zenmo.zummon.companysurvey.Survey
+import com.zenmo.zummon.companysurvey.Project
 import io.ktor.http.*
 import io.ktor.serialization.*
 import io.ktor.server.application.*
@@ -20,11 +22,13 @@ import java.util.*
 
 fun Application.configureDatabases(): Database {
     val db: Database = connectToPostgres()
+    val userRepository = UserRepository(db)
     val surveyRepository = SurveyRepository(db)
     val projectRepository = ProjectRepository(db)
     val deeplinkService = DeeplinkService(DeeplinkRepository(db))
 
     routing {
+        // List projects for current user
         get("/projects") {
             val userId = call.getUserId()
             if (userId == null) {
@@ -33,6 +37,65 @@ fun Application.configureDatabases(): Database {
             }
 
             call.respond(HttpStatusCode.OK, projectRepository.getProjectsByUserId(userId))
+        }
+
+        // Get one project that belongs to the user
+        get("/projects/{projectId}") {
+            val projectId = UUID.fromString(call.parameters["projectId"])
+
+            val userId = call.getUserId()
+            println("User ID: $userId")
+            if (userId == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@get
+            }
+
+            call.respond(HttpStatusCode.OK, projectRepository.getProjectByUserId(userId, projectId))
+        }
+
+        // Create
+        post("/projects") {
+            val project: Project?
+            try {
+                project = call.receive<Project>()
+            } catch (e: BadRequestException) {
+                if (e.cause is JsonConvertException) {
+                    call.respond(HttpStatusCode.BadRequest, errorMessageToJson(e.cause?.message))
+                    return@post
+                }
+                call.respond(HttpStatusCode.BadRequest,  errorMessageToJson(e.message))
+                return@post
+            }
+
+            val userId = call.getUserId()
+            println("User ID: $userId")
+            if (userId == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+                return@post
+            }
+
+            val newProject = projectRepository.saveToUser(project, userId)
+
+            call.respond(HttpStatusCode.Created, newProject)
+        }
+
+        // Update
+        put("/projects") {
+            val project: Project?
+            try {
+                project = call.receive<Project>()
+            } catch (e: BadRequestException) {
+                if (e.cause is JsonConvertException) {
+                    call.respond(HttpStatusCode.BadRequest, errorMessageToJson(e.cause?.message))
+                    return@put
+                }
+                call.respond(HttpStatusCode.BadRequest,  errorMessageToJson(e.message))
+                return@put
+            }
+
+            val newProject = projectRepository.save(project)
+
+            call.respond(HttpStatusCode.OK, newProject)
         }
 
         get("/projects/by-name/{projectName}/buurtcodes") {
@@ -119,6 +182,7 @@ fun Application.configureDatabases(): Database {
 
         delete("/company-surveys/{surveyId}") {
             val userId = call.getUserId()
+            println("User ID: $userId")
             if (userId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@delete
@@ -156,6 +220,7 @@ fun Application.configureDatabases(): Database {
         // set active state
         put("/company-surveys/{surveyId}/include-in-simulation") {
             val userId = call.getUserId()
+            println("User ID: $userId")
             if (userId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@put

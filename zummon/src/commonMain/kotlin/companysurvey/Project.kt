@@ -18,3 +18,13 @@ constructor(
     val energiekeRegioId: Int?,
     val buurtCodes: List<String> = emptyList(),
 )
+
+@JsExport
+fun projectsFromJson(json: String): Array<Project> {
+    return kotlinx.serialization.json.Json.decodeFromString<Array<Project>>(json)
+}
+
+@JsExport
+fun projectFromJson(json: String): Project {
+    return kotlinx.serialization.json.Json.decodeFromString<Project>(json)
+}

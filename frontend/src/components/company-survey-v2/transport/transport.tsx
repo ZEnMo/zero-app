@@ -7,6 +7,7 @@ import {CommutersVisitors} from './commuters-visitors'
 import {Trucks} from './trucks'
 import {Vans} from './vans'
 import {OtherVehicles} from "./other-vehicles";
+import {Agriculture} from "./agriculture"
 
 export const Transport = ({form, prefix, project}: {
     form: UseFormReturn,
@@ -20,7 +21,7 @@ export const Transport = ({form, prefix, project}: {
     return (
         <>
             <h2>6. Mobiliteit</h2>
-            
+
             <FormRow
                 label="Heeft u op dit adres bedrijfsauto's, busjes, vrachtwagens, of andere voertuigen?"
                 WrappedInput={BooleanInput}
@@ -31,6 +32,7 @@ export const Transport = ({form, prefix, project}: {
                     <Trucks form={form} prefix={`${prefix}.trucks`} project={project}/>
                     <Vans form={form} prefix={`${prefix}.vans`} project={project}/>
                     <Cars form={form} prefix={`${prefix}.cars`} project={project}/>
+                    <Agriculture form={form} prefix={`${prefix}.agriculture`} />
                     <OtherVehicles form={form} prefix={`${prefix}.otherVehicles`} />
                 </>
             )}

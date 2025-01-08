@@ -68,6 +68,10 @@ export const ZeroHeader: FunctionComponent<PropsWithChildren & {}> = () => {
                     <i className="pi pi-fw pi-file" style={{marginRight: '0.5em'}}></i>
                     Surveys
                 </a>
+                <a onClick={() => loadContent('/projects')} css={buttonStyle}>
+                    <i className="pi pi-fw pi-file" style={{marginRight: '0.5em'}}></i>
+                    Projects
+                </a>
                 <a onClick={() => loadContent('/simulation')} css={buttonStyle}>
                     <i className="pi pi-fw pi-file" style={{marginRight: '0.5em'}}></i>
                     Simulation

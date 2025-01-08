@@ -1,4 +1,4 @@
-import {FunctionComponent} from "react";
+import React, {FunctionComponent} from "react";
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import {useSurveys} from "./use-surveys";
@@ -70,8 +70,8 @@ export const Surveys: FunctionComponent = () => {
                                 },
                             }}>
                                 <JsonButton surveyId={survey.id}/>
-                                <DeleteButton surveyId={survey.id} onDelete={removeSurvey}/>
-                                <EditButton surveyId={survey.id}/>
+                                <DeleteButton type="bedrijven-uitvraag" id={survey.id} onDelete={removeSurvey}/>
+                                <EditButton type="bedrijven-uitvraag" id={survey.id}/>
                                 <DeeplinkButton surveyId={survey.id}/>
                             </div>
                         )}/>

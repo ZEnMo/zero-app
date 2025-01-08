@@ -1,4 +1,6 @@
 import {fetchBuurtcodesByProject} from "../../panden-select/fetch-buurtcodes"
+import {ztorFetch} from "../../services/ztor-fetch";
+import {Project} from "zero-zummon"
 
 export type FrontendProjectConfiguration = {
     name: ProjectName,

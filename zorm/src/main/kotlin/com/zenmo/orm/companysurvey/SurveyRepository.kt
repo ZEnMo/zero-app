@@ -409,6 +409,10 @@ class SurveyRepository(
                     numPlannedElectricCars = row[GridConnectionTable.numPlannedElectricCars]?.toInt(),
                     numPlannedHydrogenCars = row[GridConnectionTable.numPlannedHydgrogenCars]?.toInt(),
                 ),
+                agriculture = Agriculture(
+                    numTractors = row[GridConnectionTable.agricultureNumTractors],
+                    annualDieselUsage_L = row[GridConnectionTable.agricultureAnnualDieselUsage_L],
+                ),
                 otherVehicles = OtherVehicles(
                     hasOtherVehicles = row[GridConnectionTable.hasOtherVehicles],
                     description = row[GridConnectionTable.otherVehiclesDescription],
@@ -502,6 +506,10 @@ class SurveyRepository(
                 this[GridConnectionTable.annualTravelDistancePerCarKm] = gridConnection.transport.cars.annualTravelDistancePerCarKm?.toUInt()
                 this[GridConnectionTable.numPlannedElectricCars] = gridConnection.transport.cars.numPlannedElectricCars?.toUInt()
                 this[GridConnectionTable.numPlannedHydgrogenCars] = gridConnection.transport.cars.numPlannedHydrogenCars?.toUInt()
+
+                // agri
+                this[GridConnectionTable.agricultureNumTractors] = gridConnection.transport.agriculture.numTractors
+                this[GridConnectionTable.agricultureAnnualDieselUsage_L] = gridConnection.transport.agriculture.annualDieselUsage_L
 
                 // other vehicles
                 this[GridConnectionTable.hasOtherVehicles] = gridConnection.transport.otherVehicles.hasOtherVehicles

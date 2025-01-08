@@ -14,6 +14,7 @@ import com.zenmo.zummon.companysurvey.TimeSeries
 import com.zenmo.zummon.companysurvey.TimeSeriesType
 import com.zenmo.zummon.companysurvey.TimeSeriesUnit
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
@@ -163,7 +164,7 @@ fun createTimeSeries(
     type = getTimeSeriesType(channelMetadata, meteringPointId) ?: throw Exception("Unmapped time series type"),
     // Measurement start time
     start = Instant.parse(telemetry.first().readingTimestamp),
-    timeStep = 15.minutes,
+    timeStep = DateTimeUnit.MINUTE * 15,
     unit = TimeSeriesUnit.KWH,
     values = telemetry.map {
         it.value.toFloat()

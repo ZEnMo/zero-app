@@ -7,6 +7,7 @@ import {LabelRow} from "../generic/label-row"
 import {displayTimeZone, kotlinInstantToJsJodaInstant, prettyPrint} from "./time-series-util"
 import {Dropdown} from "primereact/dropdown"
 import {InputText} from "primereact/inputtext"
+import {IntervalDropdown} from "./interval-dropdown"
 
 const placeholder = `
 bijvoorbeeld:
@@ -49,6 +50,9 @@ export const TimeSeriesTextarea: FunctionComponent<{timeSeries: TimeSeries, setT
             </LabelRow>
             <LabelRow label="Tijdzone">
                 <Dropdown options={[{ label: 'Nederlandse tijd', value: displayTimeZone }]} value={displayTimeZone}/>
+            </LabelRow>
+            <LabelRow label="Meetinterval">
+                <IntervalDropdown timeStep={internalTimeSeries.timeStep} setTimeStep={timeStep => setTimeSeriesImpl(internalTimeSeries.withTimeStep(timeStep))} />
             </LabelRow>
             <LabelRow label="Plak hier de waarden in kWh">
                 <InputTextarea

@@ -2,7 +2,7 @@ import {Button} from "primereact/button";
 import {FunctionComponent, useState} from "react";
 import {noop} from "lodash";
 
-export const DeleteButton: FunctionComponent<{surveyId: any, onDelete?: (surveyId: any) => void}> = ({surveyId, onDelete = noop}) => {
+export const DeleteButton: FunctionComponent<{type: string, id: any, onDelete?: (type: string , id: any) => void}> = ({type, id, onDelete = noop}) => {
     const [pending, setPending] = useState(false)
     const deleteSurvey = async () => {
         setPending(true)
@@ -10,11 +10,11 @@ export const DeleteButton: FunctionComponent<{surveyId: any, onDelete?: (surveyI
             if (!confirm('Uitvraag verwijderen?')) {
                 return
             }
-            await fetch(`${import.meta.env.VITE_ZTOR_URL}/company-surveys/${surveyId}`, {
+            await fetch(`${import.meta.env.VITE_ZTOR_URL}/${type}/${id}`, {
                 method: 'DELETE',
                 credentials: 'include',
             })
-            onDelete(surveyId)
+            onDelete(id)
         } catch (error) {
             alert((error as Error).message)
         } finally {

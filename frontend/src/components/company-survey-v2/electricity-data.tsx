@@ -11,7 +11,7 @@ export const ElectricityData = ({form, prefix, project}: {
     prefix: string,
     project: ProjectConfiguration,
 }) => {
-    const [consumptionSpec, setConsumptionSpec] = useState<ConsumptionSpec | null | undefined>()
+    const [consumptionSpec, setConsumptionSpec] = useState<ConsumptionSpec | null | undefined>(initialRadioValue(form, prefix))
 
     return (
         <>
@@ -84,4 +84,16 @@ export const ElectricityData = ({form, prefix, project}: {
             {/*)}*/}
         </>
     )
+}
+
+function initialRadioValue(form: UseFormReturn, prefix: string): ConsumptionSpec | null {
+    if (form.getValues(`${prefix}.quarterHourlyDelivery_kWh`)) {
+        return ConsumptionSpec.TEXTAREA
+    }
+
+    if (form.getValues(`${prefix}.authorizationFile`)) {
+        return ConsumptionSpec.PDF_AUTHORIZATION
+    }
+
+    return null
 }

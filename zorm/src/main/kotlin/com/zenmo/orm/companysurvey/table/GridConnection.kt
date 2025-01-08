@@ -169,6 +169,12 @@ object GridConnectionTable: ZenmoUUIDTable("grid_connection") {
     val numPlannedHydgrogenCars = uinteger("num_planned_hydrogen_cars").nullable()
 
     /**
+     * [com.zenmo.zummon.companysurvey.Agriculture]
+     */
+    val agricultureNumTractors = integer("agriculture_num_tractors").nullable()
+    val agricultureAnnualDieselUsage_L = double("agriculture_annual_diesel_usage_l").nullable()
+
+    /**
      * [com.zenmo.zummon.companysurvey.OtherVehicles]
      */
     val hasOtherVehicles = bool("has_other_vehicles").nullable()
