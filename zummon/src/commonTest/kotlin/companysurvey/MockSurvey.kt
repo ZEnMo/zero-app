@@ -2,6 +2,7 @@ package companysurvey
 
 import com.benasher44.uuid.uuid4
 import com.zenmo.zummon.companysurvey.*
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.hours
 
@@ -110,7 +111,7 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                         hourlyDelivery_m3 = TimeSeries(
                             type = TimeSeriesType.GAS_DELIVERY,
                             start = Instant.parse("2022-01-01T00:00:00+01"),
-                            timeStep = 2.hours,
+                            timeStep = DateTimeUnit.HOUR * 2,
                             values = floatArrayOf(1.2f, 2.2f, 3.2f, 4.2f),
                         )
                     ),

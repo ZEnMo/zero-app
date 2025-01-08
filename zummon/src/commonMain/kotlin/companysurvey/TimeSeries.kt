@@ -2,18 +2,17 @@ package com.zenmo.zummon.companysurvey
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import com.zenmo.zummon.BenasherUuidSerializer
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.*
 import kotlinx.serialization.encodeToString
 import kotlin.js.JsExport
+import kotlin.math.roundToInt
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * This contains values parsed from a CSV/excel or fetched from an API.
@@ -26,15 +25,19 @@ data class TimeSeries (
     val type: TimeSeriesType,
     /** Start of the first measurement interval */
     val start: Instant,
-    /** Duration of the measurement interval */
-    val timeStep: Duration = type.defaultStep(),
+    /**
+     * Duration of the measurement interval.
+     * It would be easier to use [DateTimeUnit.TimeBased] or [Duration] instead of [DateTimeUnit]
+     * but then we would lose the ability to process month-based time series.
+     */
+    val timeStep: DateTimeUnit = type.defaultStep(),
     val unit: TimeSeriesUnit = type.defaultUnit(),
     val values: FloatArray = floatArrayOf(),
 ) {
     @Deprecated("Use .values", ReplaceWith("values"))
     fun getFlatDataPoints(): FloatArray = values
 
-    fun calculateEnd(): Instant = start + (timeStep * values.size)
+    fun calculateEnd(): Instant = start.plus(values.size, timeStep, TimeZone.of("Europe/Amsterdam"))
 
     fun sum(): Float = values.sum()
 
@@ -46,8 +49,9 @@ data class TimeSeries (
 
     /**
      * The number of values needed to fill a year using the specified time step.
+     * So far our simulation always assumes 365 days in a year.
      */
-    fun numValuesNeededForFullYear() = (1.days / timeStep * 365).toInt()
+    fun numValuesNeededForFullYear() = (DateTimeUnit.YEAR.toDuration() / timeStep.toDuration()).roundToInt()
 
     fun hasNumberOfValuesForOneYear() = values.size >= numValuesNeededForFullYear()
 
@@ -105,7 +109,7 @@ data class TimeSeries (
         val startOfYear = Instant.parse("$year-01-01T00:00:00+01:00")
         // can be negative
         val diff = startOfYear - start
-        val numValuesToSliceOffStart = (diff / timeStep).toInt()
+        val numValuesToSliceOffStart = (diff / timeStep.toDuration()).toInt()
 
         if (numValuesToSliceOffStart >= 0) {
             val rangeEnd = numValuesToSliceOffStart + numValuesNeededForFullYear()
@@ -128,7 +132,7 @@ data class TimeSeries (
         val end = calculateEnd()
         val year = end.toLocalDateTime(TimeZone.of("UTC+01:00")).year
         val start = Instant.parse("$year-01-01T00:00:00+01:00")
-        val numValuesInCurrentYear = ((end - start) / timeStep).toInt()
+        val numValuesInCurrentYear = ((end - start) / timeStep.toDuration()).toInt()
 
         return values.sliceArray(IntRange(values.size - numValuesInCurrentYear, values.size - 1))
             .plus(values.sliceArray(IntRange(values.size - numValuesNeededForFullYear(), values.size - numValuesInCurrentYear - 1)))
@@ -183,25 +187,25 @@ enum class TimeSeriesType {
     // Delivery from grid to end-user
     ELECTRICITY_DELIVERY {
         override fun defaultUnit() = TimeSeriesUnit.KWH
-        override fun defaultStep() = 15.minutes
+        override fun defaultStep() = DateTimeUnit.MINUTE * 15
     },
     // Feed-in of end-user back in to the rid
     ELECTRICITY_FEED_IN {
         override fun defaultUnit() = TimeSeriesUnit.KWH
-        override fun defaultStep() = 15.minutes
+        override fun defaultStep() = DateTimeUnit.MINUTE * 15
     },
     // Solar panel production
     ELECTRICITY_PRODUCTION {
         override fun defaultUnit() = TimeSeriesUnit.KWH
-        override fun defaultStep() = 15.minutes
+        override fun defaultStep() = DateTimeUnit.MINUTE * 15
     },
     GAS_DELIVERY {
         override fun defaultUnit() = TimeSeriesUnit.M3
-        override fun defaultStep() = 1.hours
+        override fun defaultStep() = DateTimeUnit.HOUR
     };
 
     abstract fun defaultUnit(): TimeSeriesUnit
-    abstract fun defaultStep(): Duration
+    abstract fun defaultStep(): DateTimeUnit
 }
 
 @JsExport
@@ -218,7 +222,7 @@ fun createEmptyTimeSeriesForYear(type: TimeSeriesType, year: Int) =
 data class DataPoint (
     val value: Float,
     val unit: TimeSeriesUnit,
-    val timeStep: kotlin.time.Duration,
+    val timeStep: DateTimeUnit,
 ) {
     fun kWh(): Double {
         if (this.unit != TimeSeriesUnit.KWH) {
@@ -233,9 +237,19 @@ data class DataPoint (
             throw UnsupportedOperationException("Can only get the kW from a kWh data point")
         }
 
-        return value * (1.hours / this.timeStep)
+        return value * (1.hours / this.timeStep.toDuration())
     }
 }
 
 @JsExport
 fun instantToEpochSeconds(instant: Instant) = instant.epochSeconds.toDouble()
+
+/**
+ * This assumes a 365-day year.
+ * It looks like we will stick with this assumption in the simulation so we might get away with this.
+ */
+fun DateTimeUnit.toDuration(): Duration = when (this) {
+    is DateTimeUnit.DayBased -> this.days.days
+    is DateTimeUnit.MonthBased -> (this.months.toDouble() * (365.0 / 12.0)).days
+    is DateTimeUnit.TimeBased -> this.nanoseconds.nanoseconds
+}

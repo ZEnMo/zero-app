@@ -5,6 +5,7 @@ import com.zenmo.orm.companysurvey.table.CompanySurveyTable
 import com.zenmo.orm.connectToPostgres
 import com.zenmo.orm.user.UserRepository
 import com.zenmo.zummon.companysurvey.Survey
+import com.zenmo.zummon.companysurvey.toDuration
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import java.util.UUID
@@ -57,7 +58,7 @@ class SurveyRepositoryTest {
         assertEquals(survey, storedSurvey)
         val gasTimeStep = storedSurvey.addresses.single().gridConnections.single().naturalGas.hourlyDelivery_m3?.timeStep
         assertNotNull(gasTimeStep)
-        assertEquals(2, gasTimeStep.inWholeHours)
+        assertEquals(2, gasTimeStep.toDuration().inWholeHours)
     }
 
     @Test
