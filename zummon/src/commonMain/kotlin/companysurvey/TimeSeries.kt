@@ -47,6 +47,8 @@ data class TimeSeries (
         start = Instant.fromEpochSeconds(epochSeconds.toLong())
     )
 
+    fun withTimeStep(timeStep: DateTimeUnit) = copy(timeStep = timeStep)
+
     /**
      * The number of values needed to fill a year using the specified time step.
      * So far our simulation always assumes 365 days in a year.
@@ -252,4 +254,20 @@ fun DateTimeUnit.toDuration(): Duration = when (this) {
     is DateTimeUnit.DayBased -> this.days.days
     is DateTimeUnit.MonthBased -> (this.months.toDouble() * (365.0 / 12.0)).days
     is DateTimeUnit.TimeBased -> this.nanoseconds.nanoseconds
+}
+
+@JsExport
+fun isoStringToDateTimeUnit(isoString: String): DateTimeUnit = when (isoString) {
+    "PT15M" -> DateTimeUnit.MINUTE * 15
+    "P1D" -> DateTimeUnit.DAY
+    "P1M" -> DateTimeUnit.MONTH
+    else -> throw Exception("Not implemented parsing iso string \"$isoString\"")
+}
+
+@JsExport
+fun dateTimeUnitToIsoString(dateTimeUnit: DateTimeUnit): String = when (dateTimeUnit) {
+    DateTimeUnit.MINUTE * 15 -> "PT15M"
+    DateTimeUnit.DAY -> "P1D"
+    DateTimeUnit.MONTH -> "P1M"
+    else -> throw Exception("Not implemented creating iso string from ${dateTimeUnit}")
 }
