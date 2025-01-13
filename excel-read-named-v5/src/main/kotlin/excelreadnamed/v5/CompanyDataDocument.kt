@@ -2,7 +2,6 @@ package com.zenmo.excelreadnamed.v5
 
 import com.zenmo.zummon.companysurvey.*
 import com.zenmo.zummon.companysurvey.TimeSeriesUnit
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.util.AreaReference
@@ -466,8 +465,8 @@ data class CompanyDataDocument(
             type = type,
             start = start,
             timeStep = when (type) {
-                TimeSeriesType.GAS_DELIVERY -> DateTimeUnit.HOUR
-                else -> DateTimeUnit.MINUTE * 15
+                TimeSeriesType.GAS_DELIVERY -> 1.hours
+                else -> 15.minutes
             },
             unit = TimeSeriesUnit.KWH,
             values = values
@@ -485,7 +484,7 @@ data class CompanyDataDocument(
         return TimeSeries(
             type = soortProfiel.timeSeriesType(),
             start = yearToFirstOfJanuary(metadata.jaar),
-            timeStep = DateTimeUnit.MINUTE * metadata.resolutieMinuten,
+            timeStep = metadata.resolutieMinuten.minutes,
             unit = metadata.eenheid,
             values = getArrayField("profileData${metadata.index}")
         )
