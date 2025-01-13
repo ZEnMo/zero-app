@@ -14,7 +14,6 @@ import {setValidationLanguage} from "../services/set-validation-language"
 export const ExcelImport: FunctionComponent = () => {
     const [activeIndex, setActiveIndex] = useState(0);
     const [surveyWithErrors, setSurveyWithErrorsState] = useState<SurveyWithErrors | undefined>(undefined)
-    const [totalPadIds, setTotalPadIds] = useState(0);
 
     useOnce(() => {
         setValidationLanguage()
@@ -40,10 +39,8 @@ export const ExcelImport: FunctionComponent = () => {
                         disabled: (surveyWithErrors == undefined)
                     }, {
                         label: "Review",
-                        disabled: (totalPadIds == 0)
                     }, {
                         label: "Opslaan",
-                        disabled: (totalPadIds == 0)
                     }]
                 }/>
                 {activeIndex === 0 && <ExcelUpload setSurveyWithErrors={(swe) => {
@@ -57,13 +54,11 @@ export const ExcelImport: FunctionComponent = () => {
                         buurtcodes={surveyWithErrors.survey.project.buurtCodes.asJsReadonlyArrayView()}
                         thisCompanyPandIds={surveyWithErrors?.survey.getSingleGridConnection().pandIds.asJsReadonlySetView()}
                         addThisCompanyPandId={(pandId: PandID) => {
-                            setTotalPadIds(totalPadIds + 1)
                             setSurveyWithErrorsState(
                                 surveyWithErrors.withPandId(pandId)
                             )
                         }}
                         removeThisCompanyPandId={(pandId: PandID) => {
-                            setTotalPadIds(totalPadIds - 1)
                             setSurveyWithErrorsState(
                                 surveyWithErrors.withoutPandId(pandId)
                             )
