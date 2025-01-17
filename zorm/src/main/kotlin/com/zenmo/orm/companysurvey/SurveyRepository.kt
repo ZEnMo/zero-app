@@ -261,7 +261,6 @@ class SurveyRepository(
         )
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     protected fun hydrateUser(row: ResultRow): com.zenmo.zummon.User? {
         val userId = row[CompanySurveyTable.createdById] ?: return null
 

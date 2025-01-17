@@ -10,10 +10,13 @@ export const DeleteButton: FunctionComponent<{type: string, id: any, onDelete?: 
             if (!confirm('Uitvraag verwijderen?')) {
                 return
             }
-            await fetch(`${import.meta.env.VITE_ZTOR_URL}/${type}/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_ZTOR_URL}/${type}/${id}`, {
                 method: 'DELETE',
                 credentials: 'include',
             })
+            if (!response.ok) {
+                throw new Error(`Could not delete: ${response.status} ${response.statusText}`)
+            }
             onDelete(id)
         } catch (error) {
             alert((error as Error).message)

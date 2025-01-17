@@ -1,10 +1,10 @@
 
-val ktor_version = "3.0.1"
+val ktor_version = "3.0.3"
 
 plugins {
     kotlin("jvm")
 
-    id("io.ktor.plugin") version "2.3.12"
+    id("io.ktor.plugin") version "3.0.3"
     kotlin("plugin.serialization")
 }
 
@@ -27,9 +27,6 @@ application {
 
 repositories {
     mavenCentral()
-    // Running a pre-release version of Ktor because of a version conflict with serialization.
-    // HTTP4K seems better anyway.
-    maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap/")
 }
 
 dependencies {
@@ -77,7 +74,7 @@ dependencies {
     implementation("com.nimbusds:nimbus-jose-jwt:9.39.2")
     implementation("com.google.crypto.tink:tink:1.13.0")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:${libs.versions.kotlinx.datetime.get()}")
     implementation("com.benasher44:uuid:0.8.4")
 
     testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
@@ -88,5 +85,13 @@ dependencies {
 tasks.withType<Test> {
     this.testLogging {
         this.showStandardStreams = true
+    }
+}
+
+kotlin {
+    sourceSets {
+        all {
+            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
+        }
     }
 }

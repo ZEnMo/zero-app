@@ -93,7 +93,6 @@ class UserRepositoryTest {
         assertEquals(userId, users.first().id)
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     @Test
     fun `test getUsersAndProjects loads projects`() {
         val userId = UUID.randomUUID()

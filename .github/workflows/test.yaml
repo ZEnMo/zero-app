@@ -26,6 +26,55 @@ jobs:
                     run  --rm  --user root 
                     zorm-test-github-actions
 
+    vallum:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres
+                ports:
+                    - 5432:5432
+                env:
+                    POSTGRES_PASSWORD: postgres
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+        steps:
+            -   uses: actions/checkout@v4
+                with:
+                    fetch-depth: 0
+            -   name: Setup Gradle
+                uses: gradle/actions/setup-gradle@v3
+            -   name: backward-compatibility-test
+                run: ./vallum/backward-compatibility-test.sh
+                env:
+                    POSTGRES_URL: jdbc:postgresql://localhost:5432/postgres
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    BASE_URL: http://localhost:8082
+                    CORS_ALLOW_ORIGIN_PATTERN: 'http://localhost:\d{2,5}'
+                    # Keycloak test realm JWK
+                    ACCESS_TOKEN_JWK: |
+                        {
+                            "kid": "n-X5BeXFe6pIXhDBsDu2mQ2VYc23RSZCFRU5Y6IuzC8",
+                            "kty": "OKP",
+                            "alg": "EdDSA",
+                            "use": "sig",
+                            "crv": "Ed25519",
+                            "x": "ILokSbk8EKH-Q1aWo_TguuDRccoSVfEbmGSbm5gcn5I"
+                        }
+                    USER_ID: f9eee559-7bd8-4a53-99cf-aaef36dad8a1
+                    CLIENT_ID: test-client-ztor-api
+                    CLIENT_SECRET: ${{ secrets.KEYCLOAK_TEST_CLIENT_SECRET }}
+            -   name: upload-test-results
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: test-results
+                    path: ./vallum/build/reports/tests/test/
+
     # Tests without a database
     gradle:
         runs-on: ubuntu-latest

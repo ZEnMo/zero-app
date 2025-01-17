@@ -11,6 +11,7 @@ group = "com.zenmo.orm"
 version = "dev"
 
 repositories {
+    maven("https://repo.osgeo.org/repository/release/")
     mavenCentral()
 }
 
@@ -38,6 +39,14 @@ tasks.withType<Test> {
 tasks {
     shadowJar {
 
+    }
+}
+
+kotlin {
+    sourceSets {
+        all {
+            languageSettings.optIn("kotlin.uuid.ExperimentalUuidApi")
+        }
     }
 }
 

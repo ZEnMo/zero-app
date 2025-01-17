@@ -8,9 +8,15 @@ import com.benasher44.uuid.Uuid
 import com.benasher44.uuid.uuid4
 import com.zenmo.zummon.BenasherUuidSerializer
 import kotlinx.datetime.*
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.js.JsExport
 import kotlin.math.roundToInt
+import kotlin.reflect.typeOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -30,6 +36,7 @@ data class TimeSeries (
      * It would be easier to use [DateTimeUnit.TimeBased] or [Duration] instead of [DateTimeUnit]
      * but then we would lose the ability to process month-based time series.
      */
+    @Serializable(with = BackwardCompatilbeDateTimeUnitSerializer::class)
     val timeStep: DateTimeUnit = type.defaultStep(),
     val unit: TimeSeriesUnit = type.defaultUnit(),
     val values: FloatArray = floatArrayOf(),
@@ -259,6 +266,7 @@ fun DateTimeUnit.toDuration(): Duration = when (this) {
 @JsExport
 fun isoStringToDateTimeUnit(isoString: String): DateTimeUnit = when (isoString) {
     "PT15M" -> DateTimeUnit.MINUTE * 15
+    "PT1H" -> DateTimeUnit.HOUR
     "P1D" -> DateTimeUnit.DAY
     "P1M" -> DateTimeUnit.MONTH
     else -> throw Exception("Not implemented parsing iso string \"$isoString\"")
@@ -267,7 +275,22 @@ fun isoStringToDateTimeUnit(isoString: String): DateTimeUnit = when (isoString) 
 @JsExport
 fun dateTimeUnitToIsoString(dateTimeUnit: DateTimeUnit): String = when (dateTimeUnit) {
     DateTimeUnit.MINUTE * 15 -> "PT15M"
+    DateTimeUnit.HOUR -> "PT1H"
     DateTimeUnit.DAY -> "P1D"
     DateTimeUnit.MONTH -> "P1M"
     else -> throw Exception("Not implemented creating iso string from ${dateTimeUnit}")
+}
+
+/**
+ * This makes serialization of DateTimeUnit backwards compatible with the previous format.
+ * The previous format was based on Duration.
+ */
+private class BackwardCompatilbeDateTimeUnitSerializer : KSerializer<DateTimeUnit> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("kotlinx.datetime.DateTimeUnit", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: DateTimeUnit) {
+        encoder.encodeString(dateTimeUnitToIsoString(value))
+    }
+
+    override fun deserialize(decoder: Decoder): DateTimeUnit = isoStringToDateTimeUnit(decoder.decodeString())
 }

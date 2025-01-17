@@ -13,7 +13,7 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
     personName = "John Doe",
     email = "john@example.com",
     dataSharingAgreed = true,
-    includeInSimulation = false,
+    includeInSimulation = true,
     addresses = listOf(
         Address(
             id = UUID.randomUUID(),
@@ -111,7 +111,7 @@ fun createMockSurvey(projectName: String = "Project") = Survey(
                         hourlyDelivery_m3 = TimeSeries(
                             type = TimeSeriesType.GAS_DELIVERY,
                             start = kotlinx.datetime.Instant.parse("2022-01-01T00:00:00+01"),
-                            timeStep = DateTimeUnit.HOUR * 2,
+                            timeStep = DateTimeUnit.HOUR,
                             values = floatArrayOf(1.2f, 2.2f, 3.2f, 4.2f),
                         )
                     ),

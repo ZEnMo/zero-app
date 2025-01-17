@@ -146,6 +146,8 @@ data class Survey(
         )
     }
 
+    fun allPandIds(): Set<PandID> = this.flattenedGridConnections().flatMap { it.pandIds }.toSet()
+
     public fun withIncludeInSimulation(includeInSimulation: Boolean): Survey {
         return this.copy(includeInSimulation = includeInSimulation)
     }
@@ -185,23 +187,3 @@ private fun <T> List<T>.firstAndOnly(): T {
     }
     return this.first()
 }
-
-@JsExport
-@Serializable
-data class SurveyWithErrors(
-    val survey: Survey,
-    val errors: List<String>,
-) {
-    companion object {
-        fun fromJson(jsonString: String): SurveyWithErrors {
-            return kotlinx.serialization.json.Json.decodeFromString(SurveyWithErrors.serializer(), jsonString)
-        }
-    }
-
-    fun withSurvey(survey: Survey) = SurveyWithErrors(survey, errors)
-
-    fun withPandId(pandId: PandID) = SurveyWithErrors(survey.withPandId(pandId), errors)
-
-    fun withoutPandId(pandId: PandID) = SurveyWithErrors(survey.withoutPandId(pandId), errors)
-}
-

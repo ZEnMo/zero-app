@@ -58,12 +58,10 @@ class ProjectRepository(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     fun save(project: Project): Project {
         return saveProject(project)
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     fun saveToUser(project: Project, userId: UUID) {
         transaction(db) {
             val savedProject = saveProject(project)
@@ -108,7 +106,6 @@ class ProjectRepository(
                 .single()[ProjectTable.buurtCodes]
         }
 
-    @OptIn(ExperimentalUuidApi::class)
     fun hydrateProject(row: ResultRow): Project {
         return Project(
             id = row[ProjectTable.id],

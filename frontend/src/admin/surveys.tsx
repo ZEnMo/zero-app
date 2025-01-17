@@ -70,7 +70,7 @@ export const Surveys: FunctionComponent = () => {
                                 },
                             }}>
                                 <JsonButton surveyId={survey.id}/>
-                                <DeleteButton type="bedrijven-uitvraag" id={survey.id} onDelete={removeSurvey}/>
+                                <DeleteButton type="company-surveys" id={survey.id} onDelete={removeSurvey}/>
                                 <EditButton type="bedrijven-uitvraag" id={survey.id}/>
                                 <DeeplinkButton surveyId={survey.id}/>
                             </div>
