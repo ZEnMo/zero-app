@@ -4,6 +4,7 @@ import {LatLng} from 'leaflet'
 import center from '@turf/center'
 import {geoJsonPositionToLeaflet} from '../geometry'
 import {featureCollection} from "@turf/helpers"
+import {chunk} from "lodash"
 
 export type BuurtFeatureCollection = FeatureCollection<MultiPolygon, BuurtProperties>
 export type Buurt = Feature<MultiPolygon, BuurtProperties>
@@ -114,7 +115,7 @@ export function getBuurtCenter(buurt: Buurt): LatLng {
 }
 
 export async function fetchBuurt(gemeente: string, buurt: string): Promise<Buurt> {
-    const buurten = await fetchBuurten(`
+    const buurten = await fetchBuurtenGet(`
         <Filter>
             <AND>
                 <PropertyIsEqualTo>
@@ -146,7 +147,7 @@ export async function fetchBuurtenByCodes(buurtCodes: readonly string[]): Promis
     }
 
     if (buurtCodes.length == 1) {
-        return await fetchBuurten(`
+        return await fetchBuurtenPost(`
             <Filter>
                 <PropertyIsEqualTo>
                     <PropertyName>buurtcode</PropertyName>
@@ -156,21 +157,32 @@ export async function fetchBuurtenByCodes(buurtCodes: readonly string[]): Promis
     `)
     }
 
-    return await fetchBuurten(`
-        <Filter>
-            <Or>
-                ${buurtCodes.map(code => `
-                    <PropertyIsEqualTo>
-                        <PropertyName>buurtcode</PropertyName>
-                        <Literal>${code}</Literal>
-                    </PropertyIsEqualTo>
-                `)}
-            </Or>
-        </Filter>
-    `)
+    // There is a limit to the number of filter clauses on the server
+    const buurtCodeChunks = chunk(buurtCodes, 10)
+
+    const requests = buurtCodeChunks.map(buurtCodeChunk =>
+        fetchBuurtenPost(`
+            <Filter>
+                <Or>
+                    ${buurtCodes.map(code => `
+                        <PropertyIsEqualTo>
+                            <PropertyName>buurtcode</PropertyName>
+                            <Literal>${code}</Literal>
+                        </PropertyIsEqualTo>
+                    `).join("").replaceAll(/ +/g, " ").replaceAll("\n", "")}
+                </Or>
+            </Filter>
+        `,
+        ))
+
+    const featureCollections = await Promise.all(requests)
+
+    return featureCollection(featureCollections.flatMap(fc => fc.features))
 }
 
-export async function fetchBuurten(xmlFilter: string): Promise<BuurtFeatureCollection> {
+const baseUrl = "https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0"
+
+async function fetchBuurtenGet(xmlFilter: string): Promise<BuurtFeatureCollection> {
     const params = new URLSearchParams({
         request: 'GetFeature',
         typeName: 'buurten',
@@ -181,7 +193,7 @@ export async function fetchBuurten(xmlFilter: string): Promise<BuurtFeatureColle
         filter: xmlFilter,
     })
 
-    const url = 'https://service.pdok.nl/cbs/wijkenbuurten/2023/wfs/v1_0?' + params.toString()
+    const url = baseUrl + "?" + params.toString()
     const response = await fetch(url)
     if (response.status != 200) {
         throw Error('Failure getting buurt geometry')
@@ -189,3 +201,24 @@ export async function fetchBuurten(xmlFilter: string): Promise<BuurtFeatureColle
 
     return await response.json()
 }
+
+async function fetchBuurtenPost(xmlFilter: string): Promise<BuurtFeatureCollection> {
+    const response = await fetch(baseUrl, {
+        method: "POST",
+        body: `
+            <GetFeature service="WFS" version="2.0.0" outputFormat="json" xmlns="http://www.opengis.net/wfs/2.0">
+                <Query typeName="buurten" srsName="EPSG:4326">
+                    ${xmlFilter}
+                </Query>
+            </GetFeature>
+        `,
+    })
+
+    if (response.status != 200) {
+        throw Error("Failure getting buurt geometry")
+    }
+
+    return await response.json()
+}
+
+
