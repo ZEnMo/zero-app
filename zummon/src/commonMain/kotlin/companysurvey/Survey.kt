@@ -46,6 +46,8 @@ data class Survey(
         }
     }
 
+    fun gridConnectionIds(): List<Uuid> = flattenedGridConnections().map { it.id }
+
     /**
      * For sorting in JavaScript primereact/datatable
      */
@@ -161,6 +163,16 @@ data class Survey(
         }
         return prettyJson.encodeToString(Survey.serializer(), this)
     }
+
+    /**
+     * When you want to create a new Survey from an existing one.
+     */
+    fun clearIds() = copy(
+        id = uuid4(),
+        createdAt = Clock.System.now().roundToMilliseconds(),
+        addresses = addresses.map { it.clearIds() },
+        createdBy = null,
+    )
 }
 
 @JsExport

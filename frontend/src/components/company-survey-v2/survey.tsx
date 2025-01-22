@@ -105,7 +105,7 @@ const SurveyWithReset: FunctionComponent<{
     }
 
     useEffect(() => {
-        const subscription = watch((value, { name, type }) =>
+        const subscription = watch((value, {name, type}) =>
             localStorage.setItem(localStorageKey, JSON.stringify(value))
         )
         return () => subscription.unsubscribe()
@@ -126,6 +126,7 @@ const SurveyWithReset: FunctionComponent<{
         try {
             const response = await fetch(url, {
                 method: 'POST',
+                credentials: "include",
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -144,6 +145,7 @@ const SurveyWithReset: FunctionComponent<{
                 return
             }
 
+            localStorage.removeItem(localStorageKey)
             navigate('/bedankt', {
                 state: {
                     deeplink: await response.json()
@@ -302,7 +304,7 @@ const loadFromLocalStorage = (localStorageKey: string): any => {
         return null
     }
 
-    const previous = JSON.parse(previousData)
+    let previous = JSON.parse(previousData)
 
     for (const tab of previous.tabs) {
         // these fields were renamed and are now unknown in the back-end
@@ -313,7 +315,8 @@ const loadFromLocalStorage = (localStorageKey: string): any => {
     try {
         const prepared = prepareForSubmit(previous, 'Testproject')
         const str = JSON.stringify(prepared)
-        const surveyObject = surveyFromJson(str)
+        const surveyObject = surveyFromJson(str).clearIds()
+        previous = surveyToFormData(JSON.parse(surveyObject.toPrettyJson()))
     } catch (e) {
         // The goal is to prevent the user from getting stuck due to schema changes by Zenmo.
         const shouldContinue = confirm(`Eerder ingevulde gegevens bevatten een fout of zijn niet compleet. 

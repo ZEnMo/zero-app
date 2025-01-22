@@ -16,4 +16,9 @@ object UserTable: Table("user") {
      * This is mostly because there is no GUI yet and no logic to display the name from Keycloak.
      */
     val note = varchar("note", 255).default("")
+
+     /**
+     * Admin flag to determine if the user has admin privileges.
+     */
+    val isAdmin = bool("is_admin").default(false)
 }

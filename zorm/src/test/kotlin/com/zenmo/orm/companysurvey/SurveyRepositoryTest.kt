@@ -4,6 +4,8 @@ import com.zenmo.orm.cleanDb
 import com.zenmo.orm.companysurvey.table.CompanySurveyTable
 import com.zenmo.orm.connectToPostgres
 import com.zenmo.orm.user.UserRepository
+import com.zenmo.zummon.companysurvey.Address
+import com.zenmo.zummon.companysurvey.GridConnection
 import com.zenmo.zummon.companysurvey.Survey
 import com.zenmo.zummon.companysurvey.toDuration
 import org.jetbrains.exposed.sql.Database
@@ -59,6 +61,38 @@ class SurveyRepositoryTest {
         val gasTimeStep = storedSurvey.addresses.single().gridConnections.single().naturalGas.hourlyDelivery_m3?.timeStep
         assertNotNull(gasTimeStep)
         assertEquals(1, gasTimeStep.toDuration().inWholeHours)
+    }
+
+    @Test
+    fun testRemoveOneOfTwoGridConnections() {
+        val projectName = "WessenHoort"
+        projectRepository.saveNewProject(projectName)
+        val survey = createMockSurvey(projectName)
+        val address = survey.addresses.single()
+        val surveyWithTwoGridConnections = survey.copy(
+            addresses = listOf(
+                address.copy(
+                    gridConnections = address.gridConnections + GridConnection()
+                )
+            )
+        )
+
+        surveyRepository.save(surveyWithTwoGridConnections)
+        val storedSurvey = surveyRepository.getSurveyById(survey.id)!!
+        assertEquals(2, storedSurvey.numGridConnections)
+        val surveyWithFirstGc = storedSurvey.copy(
+            addresses = listOf(
+                storedSurvey.addresses.single().copy(
+                    gridConnections = storedSurvey.addresses.single().gridConnections.take(1)
+                )
+            )
+        )
+        surveyRepository.save(surveyWithFirstGc)
+
+        val storedSurveyWithFirstGc = surveyRepository.getSurveyById(survey.id)!!
+        assertEquals(1, storedSurveyWithFirstGc.numGridConnections)
+        assertEquals(storedSurvey.flattenedGridConnections().first().id, storedSurveyWithFirstGc.getSingleGridConnection().id)
+
     }
 
     @Test

@@ -3,13 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
-import { Project } from "zero-zummon";
-import { redirectToLogin } from "./use-projects";
+import { User } from "zero-zummon";
+import { redirectToLogin } from "./use-users";
 
-export const ProjectForm: FunctionComponent = () => {
-    const {projectId} = useParams<{ projectId: string }>();
-    const [project, setProject] = useState<Project | null>(null);
-    const [originalData, setOriginalData] = useState<Project | null>(null);
+export const UserForm: FunctionComponent = () => {
+    const {userId} = useParams<{ userId: string }>();
+    const [user, setUser] = useState<User | null>(null);
+    const [originalData, setOriginalData] = useState<User | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -17,7 +17,7 @@ export const ProjectForm: FunctionComponent = () => {
 
     const handleCancel = () => {
         if (originalData) {
-            setProject(originalData); // Revert to original data
+            setUser(originalData); // Revert to original data
         }
         setIsEditing(false);
     };
@@ -27,16 +27,18 @@ export const ProjectForm: FunctionComponent = () => {
     };
 
     const handleInputChange =(e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setProject((prev) => ({ ...prev, [name]: value } as Project));
+        const { name, value, type, checked } = e.target;
+        setUser((prev) => ({...prev,
+            [name]: type === "checkbox" ? checked : value,
+        } as User));
     };
 
     useEffect(() => {
-        if (projectId) {
-            const fetchProject = async () => {
+        if (userId) {
+            const fetchUser = async () => {
                 setLoading(true);
                 try {
-                    const response = await fetch(`${import.meta.env.VITE_ZTOR_URL}/projects/${projectId}`, {
+                    const response = await fetch(`${import.meta.env.VITE_ZTOR_URL}/users/${userId}`, {
                         credentials: "include",
                     });
                     if (response.status === 401) {
@@ -44,11 +46,11 @@ export const ProjectForm: FunctionComponent = () => {
                         return;
                     }
                     if (response.ok) {
-                        const projectData = await response.json();
-                        setProject(projectData);
-                        setOriginalData(projectData);
+                        const userData = await response.json();
+                        setUser(userData);
+                        setOriginalData(userData);
                     } else {
-                        alert(`Error fetching project: ${response.statusText}`);
+                        alert(`Error fetching user: ${response.statusText}`);
                     }
                 } catch (error) {
                     alert((error as Error).message);
@@ -56,36 +58,35 @@ export const ProjectForm: FunctionComponent = () => {
                     setLoading(false);
                 }
             };
-            fetchProject();
+            fetchUser();
         } else {
             setIsEditing(true);
         }
-    }, [projectId]);
+    }, [userId]);
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
         setLoading(true);
         try {
-            const method = projectId ? "PUT" : "POST";
-            const url = `${import.meta.env.VITE_ZTOR_URL}/projects`
+            const method = userId ? "PUT" : "POST";
+            const url = `${import.meta.env.VITE_ZTOR_URL}/users`
             const response = await fetch(url, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify(project),
+                body: JSON.stringify(user),
             });
             if (response.status === 401) {
                 redirectToLogin();
                 return;
             }
-
-            if (response.ok) {
-                navigate(`/projects`);
-            } else {
-                alert(`Error fetching project: ${response.statusText}`);
+            if (!response.ok) {
+                alert(`Error: ${response.statusText}`);
             }
+
+            navigate(`/users`);
         } finally {
             setIsEditing(false);
             setLoading(false);
@@ -95,27 +96,40 @@ export const ProjectForm: FunctionComponent = () => {
     return (
         <PrimeReactProvider>
             <div style={{ padding: "20px", maxWidth: "500px", margin: "0 auto" }}>
-                <h3>{projectId ? "Edit Project" : "Add Project"}</h3>
+                <h3>{userId ? "Edit User" : "Add User"}</h3>
                 <form
                     onSubmit={handleSubmit}
                     style={{ display: "flex", flexDirection: "column", gap: "10px" }}
                 >
-                    <label htmlFor="name">Name:</label>
+                    <label htmlFor="name">Keycloak ID:</label>
                     <InputText
-                        id="name"
-                        name="name"
-                        value={project?.name || ""}
+                        id="id"
+                        name="id"
+                        value={user?.id || ""}
                         onChange={handleInputChange}
                         disabled={!isEditing}
                     />
-                    <label htmlFor="energiekeRegioId">Energieke Regio ID:</label>
+                    <label htmlFor="name">Note:</label>
                     <InputText
-                        id="energiekeRegioId"
-                        name="energiekeRegioId"
-                        value={project?.energiekeRegioId?.toString() || ""}
+                        id="note"
+                        name="note"
+                        value={user?.note || ""}
                         onChange={handleInputChange}
                         disabled={!isEditing}
                     />
+                    <div>
+                        <label htmlFor="isAdmin" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <input
+                                type="checkbox"
+                                id="isAdmin"
+                                name="isAdmin"
+                                checked={user?.isAdmin || false}
+                                onChange={handleInputChange}
+                                disabled={!isEditing}
+                            />
+                            Admin
+                        </label>
+                    </div>
 
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
                         {isEditing ? (

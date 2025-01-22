@@ -26,4 +26,9 @@ data class Address(
      */
     public val gridConnectionArray: Array<GridConnection>
         get() = gridConnections.toTypedArray()
+
+    fun clearIds() = copy(
+        id = uuid4(),
+        gridConnections = gridConnections.map { it.clearId() }
+    )
 }

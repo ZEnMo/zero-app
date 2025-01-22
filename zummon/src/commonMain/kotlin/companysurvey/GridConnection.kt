@@ -30,4 +30,6 @@ data class GridConnection(
     val expansionPlans: String = "",
     val electrificationPlans: String = "",
     val surveyFeedback: String = "",
-)
+) {
+    fun clearId() = copy(id = uuid4())
+}

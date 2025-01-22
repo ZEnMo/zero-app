@@ -8,6 +8,8 @@ import com.zenmo.orm.user.table.UserTable
 import com.zenmo.zummon.companysurvey.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.notInList
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 import kotlin.uuid.ExperimentalUuidApi
@@ -569,6 +571,23 @@ class SurveyRepository(
                 this[GridConnectionTable.plannedBatterySchedule] = gridConnection.storage.plannedBatterySchedule
                 this[GridConnectionTable.hasThermalStorage] = gridConnection.storage.hasThermalStorage
                 this[GridConnectionTable.thermalStorageKw] = gridConnection.storage.thermalStorageKw
+            }
+
+            // if the survey has grid connections in the database which are not in the data object, remove those.
+            GridConnectionTable.deleteWhere {
+                GridConnectionTable.id.notInList(survey.gridConnectionIds())
+                    .and(GridConnectionTable.addressId eq anyFrom (
+                            AddressTable.select(AddressTable.id).where {
+                                AddressTable.surveyId eq surveyId
+                            }
+                        )
+                    )
+            }
+
+            // if the survey has address in the database which are not in the data object, remove those.
+            AddressTable.deleteWhere {
+                AddressTable.id.notInList(survey.addresses.map { it.id })
+                    .and(AddressTable.id.inList(listOf(surveyId)))
             }
 
             for (address in survey.addresses) {

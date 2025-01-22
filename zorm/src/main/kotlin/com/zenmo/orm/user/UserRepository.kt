@@ -1,5 +1,6 @@
 package com.zenmo.orm.user
 
+import com.zenmo.zummon.User
 import com.zenmo.orm.companysurvey.ProjectRepository
 import com.zenmo.orm.user.table.UserProjectTable
 import com.zenmo.orm.user.table.UserTable
@@ -10,6 +11,8 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toJavaUuid
+import kotlin.uuid.toKotlinUuid
 
 class UserRepository(
     private val db: Database,
@@ -53,10 +56,25 @@ class UserRepository(
         }
     }
 
-    fun getUserById(id: UUID): User? {
+    fun getUserById(id: UUID): User {
         return getUsers(
             (UserTable.id eq id)
-        ).firstOrNull()
+        ).first()
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    fun save(
+        user: User,
+    ) {
+        transaction(db) {
+            UserTable.upsertReturning() {
+                it[id] = user.id.toJavaUuid()
+                it[UserTable.note] = user.note
+                it[UserTable.isAdmin] = user.isAdmin
+            }.map {
+                hydrateUser(it)
+            }.first()
+        }
     }
 
     fun saveUser(
@@ -88,10 +106,16 @@ class UserRepository(
         }
     }
 
+    fun isAdmin(userId: UUID): Boolean {
+        val user = getUserById(userId)
+        return user?.isAdmin ?: false
+    }
+    
     protected fun hydrateUser(row: ResultRow): User {
         return User(
-            id = row[UserTable.id],
+            id = row[UserTable.id].toKotlinUuid(),
             note = row[UserTable.note],
+            isAdmin = row[UserTable.isAdmin],
             projects = emptyList(), // data from different table
         )
     }

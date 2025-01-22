@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 import kotlin.test.*
-import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.toKotlinUuid
 
 class UserRepositoryTest {
     val db: Database = connectToPostgres()
@@ -29,7 +29,7 @@ class UserRepositoryTest {
         userRepository.saveUser(userId, note = note)
         val result = userRepository.getUserById(userId)
         assertNotNull(result)
-        assertEquals(userId, result.id)
+        assertEquals(userId.toKotlinUuid(), result.id)
         assertEquals(note, result.note)
     }
 
@@ -40,7 +40,7 @@ class UserRepositoryTest {
 
         val result = userRepository.getUserById(userId)
         assertNotNull(result)
-        assertEquals(userId, result.id)
+        assertEquals(userId.toKotlinUuid(), result.id)
         assertEquals("", result.note)
     }
 
@@ -90,7 +90,7 @@ class UserRepositoryTest {
         }
         val users = userRepository.getUsers((UserTable.note eq "Specific user note"))
         assertEquals(1, users.size)
-        assertEquals(userId, users.first().id)
+        assertEquals(userId.toKotlinUuid(), users.first().id)
     }
 
     @Test
@@ -108,7 +108,7 @@ class UserRepositoryTest {
 
         // Assertions
         assertNotNull(user)
-        assertEquals(userId, user.id)
+        assertEquals(userId.toKotlinUuid(), user.id)
         assertEquals("Test Note", user.note)
         assertEquals(2, user.projects.size)
 
@@ -129,11 +129,11 @@ class UserRepositoryTest {
 
         // Retrieve users
         val users = userRepository.getUsersAndProjects()
-        val user = users.find { it.id == userId }
+        val user = users.find { it.id == userId.toKotlinUuid() }
 
         // Assertions
         assertNotNull(user)
-        assertEquals(userId, user?.id)
+        assertEquals(userId.toKotlinUuid(), user?.id)
         assertEquals("User without projects", user?.note)
         assertTrue(user?.projects?.isEmpty() == true)
     }
@@ -148,8 +148,9 @@ class UserRepositoryTest {
         assertNotNull(userBeforeDelete)
 
         userRepository.deleteUserById(userId)
-        val userAfterDelete = userRepository.getUserById(userId)
-        assertTrue(userAfterDelete == null)
+        assertFailsWith(NoSuchElementException::class) {
+            userRepository.getUserById(userId)
+        }
     }
 
     @Test

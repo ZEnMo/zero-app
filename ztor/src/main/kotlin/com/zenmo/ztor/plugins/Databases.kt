@@ -10,6 +10,9 @@ import com.zenmo.ztor.errorMessageToJson
 import com.zenmo.ztor.user.getUserId
 import com.zenmo.zummon.companysurvey.Survey
 import com.zenmo.zummon.companysurvey.Project
+import com.zenmo.zummon.User
+import com.zenmo.zummon.usersFromJson
+
 import io.ktor.http.*
 import io.ktor.serialization.*
 import io.ktor.server.application.*
@@ -28,7 +31,83 @@ fun Application.configureDatabases(): Database {
     val deeplinkService = DeeplinkService(DeeplinkRepository(db))
 
     routing {
-        // List projects for current user
+        suspend fun RoutingContext.asAdmin(body: suspend () -> Unit) {
+            val userId = call.getUserId()
+
+            if (userId == null) {
+                call.respond(HttpStatusCode.Unauthorized, "User not logged in")
+                return 
+            }
+
+            if (!userRepository.isAdmin(userId)) {
+                call.respond(HttpStatusCode.Forbidden, "User is not admin")
+                return 
+            }
+
+            body()
+         }
+
+        get("/users") {
+            asAdmin {
+                val users = userRepository.getUsers()
+                call.respond(HttpStatusCode.OK, users)
+            }
+        }
+
+        get("/users/{userId}") {
+            asAdmin {
+                val userId = UUID.fromString(call.parameters["userId"])
+                val user = userRepository.getUserById(userId)
+                call.respond(HttpStatusCode.OK, user)
+            }
+        }
+
+        // Create
+        post("/users") {
+            val user: User?
+            try {
+                user = call.receive<User>()
+            } catch (e: BadRequestException) {
+                if (e.cause is JsonConvertException) {
+                    call.respond(HttpStatusCode.BadRequest, errorMessageToJson(e.cause?.message))
+                    return@post
+                }
+                call.respond(HttpStatusCode.BadRequest,  errorMessageToJson(e.message))
+                return@post
+            }
+            asAdmin {
+                val newUser = userRepository.save(user)
+                call.respond(HttpStatusCode.Created, newUser)
+            }
+        }
+
+        // Update
+        put("/users") {
+            val user: User?
+            try {
+                user = call.receive<User>()
+            } catch (e: BadRequestException) {
+                if (e.cause is JsonConvertException) {
+                    call.respond(HttpStatusCode.BadRequest, errorMessageToJson(e.cause?.message))
+                    return@put
+                }
+                call.respond(HttpStatusCode.BadRequest,  errorMessageToJson(e.message))
+                return@put
+            }
+            asAdmin {
+                val newUser = userRepository.save(user)
+                call.respond(HttpStatusCode.OK, newUser)
+            }
+        }
+
+        delete("/users/{userId}") {
+            asAdmin {
+                val userId = UUID.fromString(call.parameters["userId"])
+                userRepository.deleteUserById(userId)
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
         get("/projects") {
             val userId = call.getUserId()
             if (userId == null) {
@@ -39,12 +118,10 @@ fun Application.configureDatabases(): Database {
             call.respond(HttpStatusCode.OK, projectRepository.getProjectsByUserId(userId))
         }
 
-        // Get one project that belongs to the user
         get("/projects/{projectId}") {
             val projectId = UUID.fromString(call.parameters["projectId"])
 
             val userId = call.getUserId()
-            println("User ID: $userId")
             if (userId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@get
@@ -68,7 +145,6 @@ fun Application.configureDatabases(): Database {
             }
 
             val userId = call.getUserId()
-            println("User ID: $userId")
             if (userId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@post
@@ -182,7 +258,6 @@ fun Application.configureDatabases(): Database {
 
         delete("/company-surveys/{surveyId}") {
             val userId = call.getUserId()
-            println("User ID: $userId")
             if (userId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@delete
@@ -220,7 +295,6 @@ fun Application.configureDatabases(): Database {
         // set active state
         put("/company-surveys/{surveyId}/include-in-simulation") {
             val userId = call.getUserId()
-            println("User ID: $userId")
             if (userId == null) {
                 call.respond(HttpStatusCode.Unauthorized)
                 return@put
@@ -233,6 +307,5 @@ fun Application.configureDatabases(): Database {
             call.respond(HttpStatusCode.OK)
         }
     }
-
     return db
 }

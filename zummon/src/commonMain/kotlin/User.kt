@@ -14,5 +14,16 @@ import kotlin.uuid.Uuid
 data class User(
     val id: Uuid = Uuid.random(),
     val note: String,
-    val projects: List<Project> = emptyList()
+    val projects: List<Project> = emptyList(),
+    val isAdmin: Boolean = false
 )
+
+@JsExport
+fun usersFromJson(json: String): Array<User> {
+    return kotlinx.serialization.json.Json.decodeFromString<Array<User>>(json)
+}
+
+@JsExport
+fun userFromJson(json: String): User {
+    return kotlinx.serialization.json.Json.decodeFromString<User>(json)
+}
