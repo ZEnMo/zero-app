@@ -58,7 +58,7 @@ export const TimeSeriesTextarea: FunctionComponent<{timeSeries: TimeSeries, setT
                 <InputTextarea
                     id="values"
                     name="values"
-                    defaultValue={internalTimeSeries.values.values().map(val => val.toLocaleString()).toArray().join("\n")}
+                    defaultValue={internalTimeSeries.values.values().toArray().join("\n")}
                     onInput={e => {setTimeSeriesImpl(internalTimeSeries.withValues(parseTextArea((e.target as HTMLTextAreaElement).value)))}}
                     // onChange={e => setTimeSeriesImpl(internalTimeSeries.withValues(parseTextArea((e.target as HTMLTextAreaElement).value)))}
                     style={{display: "block", height: "10rem"}}
