@@ -16,10 +16,10 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.js.JsExport
 import kotlin.math.roundToInt
-import kotlin.reflect.typeOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.nanoseconds
+
+private val europeAmsterdam = TimeZone.of("Europe/Amsterdam")
 
 /**
  * This contains values parsed from a CSV/excel or fetched from an API.
@@ -45,9 +45,11 @@ data class TimeSeries (
     @Deprecated("Use .values", ReplaceWith("values"))
     fun getFlatDataPoints(): FloatArray = values
 
-    fun calculateEnd(): Instant = start.plus(values.size, timeStep, TimeZone.of("Europe/Amsterdam"))
+    fun calculateEnd(): Instant = start.plus(values.size, timeStep, europeAmsterdam)
 
-    fun sum(): Float = values.sum()
+    fun fullDuration(): Duration = calculateEnd() - start
+
+    fun sum(): Double = values.sumOf { it.toDouble() }
 
     fun isValid() = !isEmpty() && !sum().isNaN()
 
@@ -112,6 +114,45 @@ data class TimeSeries (
     }
 
     fun getPeak(): DataPoint = DataPoint(values.max(), unit, timeStep)
+
+    /**
+     * Convert the entire time series from day-, hour-, week- or monthbased to 15-minute based.
+     *
+     * For the latter two it would be nice to add parameters on how to distribute values
+     * over weekends and weekdays and over times of the day.
+     */
+    fun convertToQuarterHourly(): TimeSeries {
+        if (timeStep == DateTimeUnit.MINUTE * 15) {
+            return this
+        }
+
+        if (timeStep.toDuration() < 15.minutes) {
+            throw NotImplementedError("Converting a timeseries more granular than quarter-hourly to quarter-hourly is not implemented")
+        }
+
+        // If we want to be accurate in the face of different month and day lengths
+        // I think the only option is to do it step-by-step.
+        val end = calculateEnd()
+        val result = mutableListOf<Float>()
+        var currentStepStart = start
+        var i = 0;
+        while (currentStepStart < end) {
+            val currentStepEnd = currentStepStart.plus(1, timeStep, europeAmsterdam)
+            val numIntervals = ((currentStepEnd - currentStepStart) / 15.minutes).roundToInt()
+            val value = values[i] / numIntervals.toFloat()
+            repeat(numIntervals) {
+                result.add(value)
+            }
+            currentStepStart = currentStepEnd
+            i++
+        }
+
+        return copy(
+            timeStep = DateTimeUnit.MINUTE * 15,
+            values = result.toFloatArray(),
+            // start and other properties stay the same
+        )
+    }
 
     /**
      * Get a full calendar year of data if it is present.

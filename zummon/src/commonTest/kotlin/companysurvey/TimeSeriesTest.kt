@@ -2,7 +2,9 @@ package companysurvey
 
 import com.zenmo.zummon.companysurvey.TimeSeries
 import com.zenmo.zummon.companysurvey.TimeSeriesType
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.Instant
+import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -124,5 +126,29 @@ class TimeSeriesTest {
         val peak = timeSeries.getPeak()
         assertEquals(2.0, peak.kWh())
         assertEquals(8.0, peak.kW())
+    }
+
+    @Test
+    fun testConvertMonthlyToQuarterHourly() {
+        val monthlyTimeSeries = TimeSeries(
+            type = TimeSeriesType.ELECTRICITY_DELIVERY,
+            start = Instant.parse("2024-01-01T00:00:00+01:00"),
+            timeStep = DateTimeUnit.MONTH,
+            values = floatArrayOf(100f, 200f)
+        )
+
+        val quarterHourlyTimeSeries = monthlyTimeSeries.convertToQuarterHourly()
+
+        val smallestRepresentable = 300.0 / 2.0.pow(23)
+        val tolerance = smallestRepresentable
+        assertEquals(monthlyTimeSeries.sum(), quarterHourlyTimeSeries.sum(), tolerance)
+        assertEquals(Instant.parse("2024-03-01T00:00:00+01:00"), quarterHourlyTimeSeries.calculateEnd())
+
+        val numValuesInJanuary = 31 * 24 * 4;
+        val numValuesInFebruary = 29 * 24 * 4;
+        val numValues = numValuesInJanuary + numValuesInFebruary
+        assertEquals(numValues, quarterHourlyTimeSeries.values.size)
+        assertEquals(100.0, quarterHourlyTimeSeries.values.sliceArray(IntRange(0, numValuesInJanuary - 1)).sumOf { it.toDouble() }, tolerance)
+        assertEquals(200.0, quarterHourlyTimeSeries.values.sliceArray(IntRange(numValuesInJanuary, numValues - 1)).sumOf { it.toDouble() }, tolerance)
     }
 }
