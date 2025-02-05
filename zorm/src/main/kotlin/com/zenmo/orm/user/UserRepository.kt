@@ -9,6 +9,7 @@ import com.zenmo.zummon.companysurvey.Project
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toJavaUuid
@@ -27,6 +28,12 @@ class UserRepository(
                     hydrateUser(it)
                 }
         }
+    }
+    
+    fun getUserAndProjects(userId: UUID): User {
+        return getUsersAndProjects(
+            (UserTable.id eq userId)
+        ).first()
     }
 
     fun getUsersAndProjects(filter: Op<Boolean> = Op.TRUE): List<User> {
@@ -63,17 +70,45 @@ class UserRepository(
     }
 
     @OptIn(ExperimentalUuidApi::class)
-    fun save(
-        user: User,
-    ) {
+    fun save(user: User) {
         transaction(db) {
-            UserTable.upsertReturning() {
+            UserTable.upsertReturning {
                 it[id] = user.id.toJavaUuid()
-                it[UserTable.note] = user.note
-                it[UserTable.isAdmin] = user.isAdmin
+                it[note] = user.note
+                it[isAdmin] = user.isAdmin
             }.map {
                 hydrateUser(it)
             }.first()
+    
+           // db project ids
+            val currentProjectIds = UserProjectTable
+            .selectAll()
+            .where { UserProjectTable.userId eq user.id.toJavaUuid() }
+            .map { it[UserProjectTable.projectId] }
+            .toSet()
+
+            // coming project ids
+            val newProjectIds = user.projects.map { it.id }.toSet()
+
+            // add and remove projects
+            val projectsToAdd = newProjectIds - currentProjectIds
+            val projectsToRemove = currentProjectIds - newProjectIds
+
+            // insert new
+            if (projectsToAdd.isNotEmpty()) {
+                UserProjectTable.batchInsert(projectsToAdd) { projectId ->
+                    this[UserProjectTable.projectId] = projectId
+                    this[UserProjectTable.userId] = user.id.toJavaUuid()
+                }
+            }
+
+            // remove old
+            if (projectsToRemove.isNotEmpty()) {
+                UserProjectTable.deleteWhere {
+                    (UserProjectTable.userId eq user.id.toJavaUuid()) and
+                    (UserProjectTable.projectId inList projectsToRemove)
+                }
+            }
         }
     }
 
@@ -107,7 +142,12 @@ class UserRepository(
     }
 
     fun isAdmin(userId: UUID): Boolean {
-        val user = getUserById(userId)
+        val user = try {
+            getUserById(userId)
+        } catch (e: NoSuchElementException) {
+            null
+        }
+    
         return user?.isAdmin ?: false
     }
     

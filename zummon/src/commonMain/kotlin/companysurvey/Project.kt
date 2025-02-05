@@ -15,7 +15,7 @@ constructor(
     val id: Uuid = uuid4(),
     val name: String = "",
     // Project ID aka Energy Hub ID of Energieke Regio.
-    val energiekeRegioId: Int?,
+    val energiekeRegioId: Int? = null,
     val buurtCodes: List<String> = emptyList(),
 )
 

@@ -1,23 +1,30 @@
-import React, { FormEvent, FunctionComponent, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { FormEvent, FunctionComponent, useEffect, useState, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { PrimeReactProvider } from "primereact/api";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
-import { User } from "zero-zummon";
+import { User, Project, projectsFromJson } from "zero-zummon";
 import { redirectToLogin } from "./use-users";
+import { ProjectsDropdown } from "./projects-dropdown";
+import { UserProjectsList } from "./user-projects-list";
+import { Toast } from "primereact/toast";
 
 export const UserForm: FunctionComponent = () => {
     const {userId} = useParams<{ userId: string }>();
     const [user, setUser] = useState<User | null>(null);
     const [originalData, setOriginalData] = useState<User | null>(null);
+    const [selectedProjects, setSelectedProjects] = useState<Project[]>([]);
+    const [userProjects, setUserProjects] = useState<Project[]>([]);
+    const msgs = useRef<Toast>(null);
 
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const navigate = useNavigate();
 
     const handleCancel = () => {
-        if (originalData) {
-            setUser(originalData); // Revert to original data
+        if (originalData) { // Revert to original data
+            setUser(originalData);
+            setSelectedProjects(userProjects)
+
         }
         setIsEditing(false);
     };
@@ -33,12 +40,17 @@ export const UserForm: FunctionComponent = () => {
         } as User));
     };
 
+    const transformProjects = (projects: any[]): Project[] => {
+        const jsonString = JSON.stringify(projects);
+        return projectsFromJson(jsonString);
+    };
+
     useEffect(() => {
         if (userId) {
             const fetchUser = async () => {
                 setLoading(true);
                 try {
-                    const response = await fetch(`${import.meta.env.VITE_ZTOR_URL}/users/${userId}`, {
+                    const response = await fetch(`${import.meta.env.VITE_ZTOR_URL}/users/${userId}/projects`, {
                         credentials: "include",
                     });
                     if (response.status === 401) {
@@ -49,6 +61,9 @@ export const UserForm: FunctionComponent = () => {
                         const userData = await response.json();
                         setUser(userData);
                         setOriginalData(userData);
+                        setUserProjects(userData.projects)
+                        const formattedProjects = transformProjects(userData.projects)
+                        setSelectedProjects(formattedProjects)
                     } else {
                         alert(`Error fetching user: ${response.statusText}`);
                     }
@@ -68,6 +83,13 @@ export const UserForm: FunctionComponent = () => {
         event.preventDefault();
         setLoading(true);
         try {
+            const sendUser = JSON.stringify({
+                ...user,
+                projects: selectedProjects.map((project) => ({
+                    id: project.id.toString(),
+                    name: project.name,
+                })),
+            })
             const method = userId ? "PUT" : "POST";
             const url = `${import.meta.env.VITE_ZTOR_URL}/users`
             const response = await fetch(url, {
@@ -76,17 +98,22 @@ export const UserForm: FunctionComponent = () => {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify(user),
+                body: sendUser,
             });
+
             if (response.status === 401) {
-                redirectToLogin();
                 return;
             }
-            if (!response.ok) {
-                alert(`Error: ${response.statusText}`);
+            if (response.ok) {
+                msgs.current?.show([
+                    { sticky: true, severity: "success", summary: "Success", detail: "User saved successfully.", closable: true },
+                ]);
+                setUserProjects(selectedProjects);
+            } else {
+                msgs.current?.show([
+                    {sticky: true, severity: 'error', summary: 'Error', detail: `Error: ${response.statusText}`, closable: false},
+                ]);
             }
-
-            navigate(`/users`);
         } finally {
             setIsEditing(false);
             setLoading(false);
@@ -95,6 +122,7 @@ export const UserForm: FunctionComponent = () => {
 
     return (
         <PrimeReactProvider>
+            <Toast ref={msgs} />
             <div style={{ padding: "20px", maxWidth: "500px", margin: "0 auto" }}>
                 <h3>{userId ? "Edit User" : "Add User"}</h3>
                 <form
@@ -131,6 +159,13 @@ export const UserForm: FunctionComponent = () => {
                         </label>
                     </div>
 
+                    <ProjectsDropdown
+                        selectedProjects={selectedProjects}
+                        onChange={setSelectedProjects}
+                        disabled={!isEditing}
+                    />
+                    
+
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
                         {isEditing ? (
                             <>
@@ -142,6 +177,7 @@ export const UserForm: FunctionComponent = () => {
                         )}
                     </div>
                 </form>
+                <UserProjectsList projects={userProjects}/>
             </div>
         </PrimeReactProvider>
     );

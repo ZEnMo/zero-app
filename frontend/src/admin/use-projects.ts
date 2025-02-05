@@ -33,7 +33,7 @@ export const useProjects = (): UseProjectReturn => {
                 return
             }
             if (response.status === 500) {
-                return
+                throw new Error(`Failed: ${response.statusText}`)
             }
 
             setProjects(projectsFromJson(await response.text()))

@@ -3,7 +3,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import {useUsers} from "./use-users";
 import {PrimeReactProvider} from "primereact/api";
-import {User} from "zero-zummon"
+import {User, Project} from "zero-zummon"
 
 import "primereact/resources/themes/lara-light-cyan/theme.css"
 import 'primeicons/primeicons.css'
@@ -51,6 +51,17 @@ export const Users: FunctionComponent = () => {
                                 <span style={{ color: 'red' }}>✘</span>
                             )}
                         </div>
+                    )}
+                />
+                <Column
+                    field="projects"
+                    header="Projects"
+                    body={(user: User) => (
+                        <ul>
+                            {Array.from(user.projects).map((project: Project) => (
+                                <li key={project.id}>{project.name}</li>
+                            ))}
+                        </ul>
                     )}
                 />
                 <Column body={(user: User) => (

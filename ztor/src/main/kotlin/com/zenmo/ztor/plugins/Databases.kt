@@ -49,7 +49,7 @@ fun Application.configureDatabases(): Database {
 
         get("/users") {
             asAdmin {
-                val users = userRepository.getUsers()
+                val users = userRepository.getUsersAndProjects()
                 call.respond(HttpStatusCode.OK, users)
             }
         }
@@ -58,6 +58,14 @@ fun Application.configureDatabases(): Database {
             asAdmin {
                 val userId = UUID.fromString(call.parameters["userId"])
                 val user = userRepository.getUserById(userId)
+                call.respond(HttpStatusCode.OK, user)
+            }
+        }
+
+        get("/users/{userId}/projects") {
+            asAdmin {
+                val userId = UUID.fromString(call.parameters["userId"])
+                val user = userRepository.getUserAndProjects(userId)
                 call.respond(HttpStatusCode.OK, user)
             }
         }
@@ -105,6 +113,12 @@ fun Application.configureDatabases(): Database {
                 val userId = UUID.fromString(call.parameters["userId"])
                 userRepository.deleteUserById(userId)
                 call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        get("/all-projects") {
+            asAdmin {
+                call.respond(HttpStatusCode.OK, projectRepository.getProjects())
             }
         }
 

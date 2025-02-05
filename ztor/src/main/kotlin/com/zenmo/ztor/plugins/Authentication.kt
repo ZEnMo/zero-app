@@ -1,6 +1,7 @@
 package com.zenmo.ztor.plugins
 
 import com.zenmo.ztor.user.UserSession
+import com.zenmo.ztor.user.UserInfo
 import com.zenmo.ztor.user.decodeAccessToken
 import io.ktor.client.*
 import io.ktor.client.*
@@ -18,6 +19,9 @@ import io.ktor.server.plugins.forwardedheaders.*
 import kotlinx.html.a
 import kotlinx.html.body
 import kotlinx.html.p
+import com.zenmo.orm.connectToPostgres
+import org.jetbrains.exposed.sql.Database
+import com.zenmo.orm.user.UserRepository
 
 val applicationHttpClient = HttpClient(CIO) {
     install(ContentNegotiation) {
@@ -29,6 +33,9 @@ val applicationHttpClient = HttpClient(CIO) {
  * After https://ktor.io/docs/server-oauth.html
  */
 fun Application.configureAuthentication() {
+    val db: Database = connectToPostgres()
+    val userRepository = UserRepository(db)
+
     // This reads the X-Forwarded-Proto header.
     // This allows us to set the secure cookie below.
     install(XForwardedHeaders)
@@ -95,11 +102,18 @@ fun Application.configureAuthentication() {
         }
         get("/user-info") {
             val userSession: UserSession? = call.sessions.get()
+
             if (userSession == null) {
-                // frontend can show login button
                 call.respondText("Not logged in", status=HttpStatusCode.Unauthorized)
             } else {
-                call.respond(userSession.getDecodedAccessToken())
+                val userId = userSession.getUserId()
+                val isAdmin = userRepository.isAdmin(userId)
+
+                val response = UserInfo(
+                    isAdmin = isAdmin,
+                    decodedAccessToken = userSession.getDecodedAccessToken()
+                )
+                call.respond(response)
             }
         }
         get("/home") {

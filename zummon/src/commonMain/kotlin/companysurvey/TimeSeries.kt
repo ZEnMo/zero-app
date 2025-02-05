@@ -18,6 +18,7 @@ import kotlin.js.JsExport
 import kotlin.math.roundToInt
 import kotlin.reflect.typeOf
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 
 /**
@@ -55,6 +56,11 @@ data class TimeSeries (
     )
 
     fun withTimeStep(timeStep: DateTimeUnit) = copy(timeStep = timeStep)
+
+    /**
+     * This can be used to create a J_EAProfile in Zero Engine.
+     */
+    fun timeStepInHours() = this.timeStep.toHours()
 
     /**
      * The number of values needed to fill a year using the specified time step.
@@ -253,6 +259,8 @@ data class DataPoint (
 @JsExport
 fun instantToEpochSeconds(instant: Instant) = instant.epochSeconds.toDouble()
 
+fun DateTimeUnit.toHours(): Double = this.toDuration() / 1.hours
+
 /**
  * This assumes a 365-day year.
  * It looks like we will stick with this assumption in the simulation so we might get away with this.
@@ -260,7 +268,7 @@ fun instantToEpochSeconds(instant: Instant) = instant.epochSeconds.toDouble()
 fun DateTimeUnit.toDuration(): Duration = when (this) {
     is DateTimeUnit.DayBased -> this.days.days
     is DateTimeUnit.MonthBased -> (this.months.toDouble() * (365.0 / 12.0)).days
-    is DateTimeUnit.TimeBased -> this.nanoseconds.nanoseconds
+    is DateTimeUnit.TimeBased -> this.duration
 }
 
 @JsExport
