@@ -58,7 +58,7 @@ export const Users: FunctionComponent = () => {
                     header="Projects"
                     body={(user: User) => (
                         <ul>
-                            {Array.from(user.projects).map((project: Project) => (
+                            {((user.projects) as any).map((project: Project) => (
                                 <li key={project.id}>{project.name}</li>
                             ))}
                         </ul>
